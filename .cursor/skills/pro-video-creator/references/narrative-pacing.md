@@ -220,110 +220,119 @@ Dùng cho: problem↔solution transitions, before↔after
 
 ### Tại sao?
 
-Khi TTS tạo audio, mỗi scene có duration khác nhau. Nếu hardcode `delay={40}`, animation có thể xuất hiện trước/sau narration. Dùng `AUDIO_SEGMENTS` đảm bảo sync.
+`AUDIO_SEGMENTS` giờ chứa **nhiều segment per scene** — mỗi segment = 1 câu narration với `startFrame`/`endFrame` chính xác từ SRT timestamps. Dùng `segments[N].startFrame` để từng visual element xuất hiện đúng lúc câu narration tương ứng được nói.
 
-### Pattern 1: Scene start → derive all delays
+### Pattern 1: Multi-segment timing (BẮT BUỘC)
 
 ```tsx
 export const MyScene: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-
-  // ĐÚNG: Lấy timing từ audio segments
-  const segments = AUDIO_SEGMENTS[sceneKey]; // sceneKey = "hook", "text", "data"...
-  const startFrame = segments[0].startFrame;
-
-  // Title xuất hiện khi narration bắt đầu
-  const titleDelay = startFrame;
-
-  // Lottie/focal visual xuất hiện 10 frames sau title
-  const focalDelay = startFrame + 10;
-
-  // Content items xuất hiện 40 frames sau (khi narration đề cập)
-  const contentDelay = startFrame + 40;
-
-  // Counter bắt đầu 60 frames sau
-  const counterDelay = startFrame + 60;
+  const segments = AUDIO_SEGMENTS[sceneKey];
+  // Mỗi segment = 1 câu narration với startFrame/endFrame chính xác
+  const seg0 = segments[0];                              // câu 1
+  const seg1 = segments[1] ?? segments[0];               // câu 2 (fallback to câu 1)
+  const seg2 = segments[2] ?? segments[1] ?? segments[0]; // câu 3
 
   return (
     <AbsoluteFill>
-      <AnimatedText ... delay={titleDelay} />
-      <LottieAsset ... />  {/* wrapped in Animated with delay={focalDelay} */}
-      <StaggeredMotion ... />  {/* items with delay={contentDelay} */}
-      <AnimatedCounter ... delay={counterDelay} />
+      {/* Focal visual — xuất hiện khi câu 1 bắt đầu */}
+      <Animated delay={seg0.startFrame}>
+        <LottieAsset ... />
+      </Animated>
+
+      {/* Title — xuất hiện khi câu 1 bắt đầu */}
+      <AnimatedText delay={seg0.startFrame}>...</AnimatedText>
+
+      {/* Cards — xuất hiện khi câu 2 bắt đầu */}
+      <Animated delay={seg1.startFrame}>
+        <StaggeredMotion ...>...</StaggeredMotion>
+      </Animated>
+
+      {/* Counter — xuất hiện khi câu 3 nói con số */}
+      <AnimatedCounter delay={seg2.startFrame} />
     </AbsoluteFill>
   );
 };
 ```
 
-### Pattern 2: Stagger items synced to narration
+### Pattern 2: Stagger items within a segment
 
 ```tsx
 // Narration: "Ba yếu tố: tốc độ, chính xác, và chi phí thấp"
-// Mỗi item cách nhau ~0.8s (24 frames at 30fps)
-const baseDelay = AUDIO_SEGMENTS.info[0].startFrame + 20;
-const ITEMS = [
-  { label: "Tốc độ", delay: baseDelay },
-  { label: "Chính xác", delay: baseDelay + 24 },
-  { label: "Chi phí thấp", delay: baseDelay + 48 },
-];
+// seg1 covers this sentence — stagger items within seg1's timespan
+const seg1 = segments[1];
 
-// Hoặc dùng StaggeredMotion (tự stagger)
-<StaggeredMotion
-  stagger={8}  // 8 frames giữa mỗi item (~0.27s)
-  transition={{ opacity: [0, 1], y: [30, 0], duration: 25 }}
->
-  {ITEMS.map(item => <Card key={item.label} {...item} />)}
-</StaggeredMotion>
+{ITEMS.map((item, i) => (
+  <Animated delay={seg1.startFrame + i * 15} key={item.label}>
+    <Card {...item} />
+  </Animated>
+))}
+
+// Hoặc dùng StaggeredMotion (stagger tự động từ seg1)
+<Animated delay={seg1.startFrame}>
+  <StaggeredMotion
+    transition={{ stagger: 8, opacity: [0, 1], y: [30, 0], duration: 25 }}
+  >
+    {ITEMS.map(item => <Card key={item.label} {...item} />)}
+  </StaggeredMotion>
+</Animated>
 ```
 
-### Pattern 3: Counter synced to narration emphasis
+### Pattern 3: Counter synced to specific sentence
 
 ```tsx
-// Narration: "...tiết kiệm hơn 10 giờ mỗi tuần"
-// Counter starts slightly before narration reaches the number
-const counterStart = AUDIO_SEGMENTS.data[0].startFrame + 50;
+// Narration seg2: "...tiết kiệm hơn 10 giờ mỗi tuần"
+const seg2 = segments[2];
 
 <AnimatedCounter
   transition={{
     values: [0, 10],
-    duration: 90,      // count over 3 seconds
-    delay: counterStart,
+    duration: 90,
+    delay: seg2.startFrame,
     easing: "easeOut",
   }}
 />
 ```
 
-### Pattern 4: Spring entrance synced to narration
+### Pattern 4: Spring entrance synced to segment
 
 ```tsx
-// ĐÚNG: derive từ AUDIO_SEGMENTS
-const revealStart = AUDIO_SEGMENTS.solution[0].startFrame;
-const iconAppear = spring({ frame: frame - revealStart, fps, config: { damping: 200 } });
-
-// SAI: Hardcode frame number
-const iconAppear = spring({ frame: frame - 30, fps });  // KHÔNG LÀM THẾ NÀY
+const seg1 = segments[1];
+const iconAppear = spring({ frame: frame - seg1.startFrame, fps, config: { damping: 200 } });
 ```
 
-### Anti-patterns (KHÔNG ĐƯỢC)
+### Pattern 5: Fallback when only 1 segment
 
 ```tsx
-// ❌ Hardcoded delays — sẽ lệch khi TTS duration thay đổi
+// Nếu scene chỉ có 1 segment, chia duration thành 3 phần
+const seg = segments[0];
+const duration = seg.endFrame - seg.startFrame;
+const t1 = seg.startFrame;
+const t2 = seg.startFrame + Math.round(duration * 0.35);
+const t3 = seg.startFrame + Math.round(duration * 0.65);
+```
+
+### Anti-patterns (TUYỆT ĐỐI KHÔNG)
+
+```tsx
+// SAI: Arbitrary offsets — không khớp narration
+delay={startFrame + 80}   // 80 là gì? câu nào?
+delay={startFrame + 120}  // 120 là gì?
+
+// SAI: Hardcoded delays
 delay={40}
 delay={55}
-delay={120}
 
-// ✅ Derived từ AUDIO_SEGMENTS
-delay={segments[0].startFrame}
-delay={segments[0].startFrame + 15}
-delay={segments[0].startFrame + 40}
+// ĐÚNG: Dùng segment index
+delay={segments[0].startFrame}   // câu 1
+delay={segments[1].startFrame}   // câu 2
+delay={segments[2].startFrame}   // câu 3
 ```
 
 ### Hold frame pattern
 
 ```tsx
-const appear = spring({ frame: frame - startFrame, fps, config: { damping: 200 } });
-// Element appears and STAYS — no continuous animation after entrance
+const seg0 = segments[0];
+const appear = spring({ frame: frame - seg0.startFrame, fps, config: { damping: 200 } });
 <div style={{ opacity: appear, transform: `scale(${appear})` }}>
   {content}
 </div>
@@ -334,11 +343,12 @@ const appear = spring({ frame: frame - startFrame, fps, config: { damping: 200 }
 ## Checklist trước khi code mỗi scene
 
 - [ ] Scene chỉ truyền tải 1 ý chính?
-- [ ] Visual elements xuất hiện đúng lúc narration đề cập?
-- [ ] **ALL timing derived từ AUDIO_SEGMENTS?** (KHÔNG hardcode delay numbers)
+- [ ] Mỗi visual element map tới 1 segment index (`segments[0]`, `[1]`, `[2]`)?
+- [ ] **KHÔNG dùng arbitrary offset** (`startFrame + 80`) — dùng `segments[N].startFrame`?
 - [ ] Có khoảng hold (2-3s) sau khi element xuất hiện?
 - [ ] Ambient layer đủ nhẹ (opacity < 0.15)?
 - [ ] Animation entrance đủ chậm (20-30 frames)?
 - [ ] Spring config smooth (damping: 200) cho hầu hết motion?
 - [ ] Chỉ 1 focal point tại mỗi thời điểm?
-- [ ] Scene duration hợp lý với lượng nội dung?
+- [ ] Max 4 visual elements per scene?
+- [ ] Dùng `LAYOUT`/`ZONES` constants thay vì magic pixels?

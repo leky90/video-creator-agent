@@ -7,7 +7,7 @@ import {
   staticFile,
 } from "remotion";
 
-import manifest from "@lottie/manifest.json";
+import manifest from "../../public/lottie/manifest.json";
 
 type ManifestEntry = (typeof manifest)[number];
 

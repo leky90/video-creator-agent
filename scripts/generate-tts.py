@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """
-Generate TTS from segments JSON → MP3 files.
+Generate TTS from segments JSON → MP3 + SRT files.
+
+Outputs per segment:
+  {seg_id}.mp3  — audio file
+  {seg_id}.srt  — word-level subtitle timestamps (edge-tts only, sentence-grouped)
 
 Engines (set TTS_ENGINE in .env):
-  edge        — Microsoft Edge TTS, free, default
+  edge        — Microsoft Edge TTS, free, default (supports SRT)
   elevenlabs  — ElevenLabs, needs ELEVENLABS_API_KEY
   google      — Google Cloud TTS, needs GOOGLE_TTS_API_KEY
 
@@ -46,11 +50,96 @@ def clean(text: str) -> str:
 
 
 def generate_edge(seg_id: str, text: str, voice: str, out_path: str) -> None:
+    srt_path = out_path.replace(".mp3", ".srt")
     subprocess.run(
-        [sys.executable, "-m", "edge_tts", "--voice", voice, "--text", text, "--write-media", out_path],
+        [
+            sys.executable, "-m", "edge_tts",
+            "--voice", voice,
+            "--text", text,
+            "--write-media", out_path,
+            "--write-subtitles", srt_path,
+        ],
         check=True,
         cwd=ROOT,
     )
+    if os.path.isfile(srt_path):
+        grouped = _group_srt_by_sentence(srt_path)
+        with open(srt_path, "w", encoding="utf-8") as f:
+            f.write(grouped)
+        print(f"  + {os.path.basename(srt_path)} (sentence-grouped)")
+
+
+def _parse_srt_time(ts: str) -> float:
+    """Parse SRT timestamp 'HH:MM:SS,mmm' → seconds."""
+    h, m, rest = ts.strip().split(":")
+    s, ms = rest.split(",")
+    return int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000.0
+
+
+def _format_srt_time(sec: float) -> str:
+    """Format seconds → 'HH:MM:SS,mmm'."""
+    h = int(sec // 3600)
+    m = int((sec % 3600) // 60)
+    s = sec % 60
+    ms = int((s - int(s)) * 1000)
+    return f"{h:02d}:{m:02d}:{int(s):02d},{ms:03d}"
+
+
+def _group_srt_by_sentence(srt_path: str) -> str:
+    """Group word-level SRT entries into sentence-level entries.
+    
+    Splits on sentence-ending punctuation (.!?) to produce fewer, 
+    more meaningful subtitle blocks aligned to sentence boundaries.
+    """
+    with open(srt_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    blocks = re.split(r"\n\n+", content.strip())
+    words = []
+    for block in blocks:
+        lines = block.strip().split("\n")
+        if len(lines) < 3:
+            continue
+        time_line = lines[1]
+        text_part = " ".join(lines[2:]).strip()
+        if " --> " not in time_line:
+            continue
+        start_str, end_str = time_line.split(" --> ")
+        words.append({
+            "start": _parse_srt_time(start_str),
+            "end": _parse_srt_time(end_str),
+            "text": text_part,
+        })
+
+    if not words:
+        return content
+
+    sentences = []
+    current_words = []
+    for w in words:
+        current_words.append(w)
+        if re.search(r"[.!?。]$", w["text"].strip()):
+            sentences.append({
+                "start": current_words[0]["start"],
+                "end": current_words[-1]["end"],
+                "text": " ".join(cw["text"] for cw in current_words),
+            })
+            current_words = []
+    if current_words:
+        sentences.append({
+            "start": current_words[0]["start"],
+            "end": current_words[-1]["end"],
+            "text": " ".join(cw["text"] for cw in current_words),
+        })
+
+    out_lines = []
+    for i, sent in enumerate(sentences, 1):
+        out_lines.append(str(i))
+        out_lines.append(f"{_format_srt_time(sent['start'])} --> {_format_srt_time(sent['end'])}")
+        out_lines.append(sent["text"])
+        out_lines.append("")
+
+    return "\n".join(out_lines)
 
 
 def generate_elevenlabs(seg_id: str, text: str, voice: str, out_path: str) -> None:

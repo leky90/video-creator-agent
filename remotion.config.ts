@@ -16,8 +16,8 @@ Config.overrideWebpackConfig((config) => {
 			...config.resolve,
 			alias: {
 				...(config.resolve?.alias ?? {}),
-				"@shared": path.resolve(__dirname, "src/shared"),
-				"@lottie": path.resolve(__dirname, "public/lottie"),
+				"~shared": path.resolve(__dirname, "src/shared"),
+				"~lottie": path.resolve(__dirname, "public/lottie"),
 			},
 		},
 	};

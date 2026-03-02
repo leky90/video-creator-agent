@@ -13,9 +13,9 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["src/shared/*"],
-      "@lottie/*": ["public/lottie/*"]
+      "~shared/*": ["src/shared/*"],
+      "~lottie/*": ["public/lottie/*"]
     }
   },
-  "exclude": ["remotion.config.ts", "src/projects"]
+  "exclude": ["remotion.config.ts"]
 }

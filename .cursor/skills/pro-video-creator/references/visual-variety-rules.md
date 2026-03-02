@@ -13,7 +13,7 @@ Before coding scenes, create a layout plan. Map each scene to a different layout
 | Multi-column | 2-4 equal columns | StaggeredMotion cards with Lucide icons |
 | Full-bleed visual | Large Lottie fills the canvas | LottieAsset("ai-network") full-width |
 | Timeline/flow | Horizontal or vertical sequential flow | evolvePath + ordered items |
-| Scattered/organic | Items placed at irregular positions, noise2D floating | Floating cards with noise2D offsets |
+| Scattered/organic | Items at offset positions (NO noise2D drift) | Offset cards with Animated entrance |
 | Data dashboard | Charts, counters, metrics | AnimatedCounter + Pie + stat rows |
 | Terminal/code | Dark code editor aesthetic | CodeBlock + TypeWriter + MatrixRain |
 
@@ -89,15 +89,58 @@ While maintaining a consistent palette, vary the **dominant accent** per scene:
 
 Accent shows in: icon backgrounds, counter colors, border highlights, particle colors.
 
-## Rule 6: Content Density Variation
+## Rule 6: Content Density Limits
+
+**Hard limit: MAX 4 visual elements per scene** (not counting background + ambient).
+
+| Layout Archetype | Max Elements | Element Types |
+|---|---|---|
+| Center-focus | 3 | focal + title + counter/badge |
+| Left-right split | 4 | left focal + right title + right 1-2 stats |
+| Multi-column | 4 | title + max 4 cards |
+| Data dashboard | 4 | chart + title + 2-3 stat rows |
+| Terminal/code | 3 | title + code block + accent |
+| Full-bleed | 2 | title + full focal |
 
 Alternate between:
-- **Dense scenes** (many elements: multi-column cards, stat dashboards, icon grids)
-- **Sparse scenes** (1-2 focal elements: LottieAsset centered, single counter)
+- **Dense scenes** (3-4 elements: multi-column cards, stat rows)
+- **Sparse scenes** (2 elements: LottieAsset centered + single title)
 
 This creates visual rhythm and prevents fatigue.
 
-## Rule 7: Text Treatment Diversity
+## Rule 7: Z-Index Layering (BẮT BUỘC)
+
+Every scene must follow this z-index stack. Import from `~shared/layout`:
+
+```
+Z_INDEX.background (0) — gradient, static bg
+Z_INDEX.ambient    (1) — Particles, MatrixRain
+Z_INDEX.content    (2) — cards, stats, supporting elements
+Z_INDEX.focal      (3) — LottieAsset, main chart
+Z_INDEX.text       (4) — AnimatedText titles, labels
+Z_INDEX.subtitle  (10) — SubtitleSequence
+```
+
+**Rules:**
+- Focal point is ALWAYS z=3 — nothing else at z=3
+- Title is ALWAYS z=4 — always readable on top
+- Ambient NEVER above z=1
+- Content elements at z=2 must not overlap with focal (z=3)
+
+## Rule 8: No noise2D on Content Elements
+
+`noise2D` drift is ONLY allowed on:
+- Ambient particles (z=1)
+- Background decorative elements
+
+`noise2D` is FORBIDDEN on:
+- Cards, text, icons, buttons
+- Focal point elements (LottieAsset, CodeBlock)
+- Any element the viewer needs to read
+
+Static or entrance-only animation is cleaner than continuous drift.
+
+## Rule 9: Text Treatment Diversity
 
 Vary how text is presented:
 
@@ -133,3 +176,7 @@ Verify:
 - [ ] Animation techniques are distributed (max 2 each)
 - [ ] Accent colors rotate
 - [ ] Dense/sparse alternation
+- [ ] Max 4 visual elements per scene
+- [ ] Z-index layering follows `Z_INDEX` constants
+- [ ] No noise2D on content elements
+- [ ] All layout uses `LAYOUT`/`ZONES` constants

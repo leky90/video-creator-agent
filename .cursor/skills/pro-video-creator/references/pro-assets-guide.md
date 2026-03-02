@@ -15,7 +15,7 @@ Chất lượng visual KHÔNG phụ thuộc vào khả năng vẽ của model. T
 **34 Lottie animations có sẵn** trong `public/lottie/`, phân loại theo chủ đề. Dùng `LottieAsset` component:
 
 ```tsx
-import { LottieAsset } from "@shared/LottieAsset";
+import { LottieAsset } from "~shared/LottieAsset";
 
 <LottieAsset name="ai-brain" style={{ width: 400, height: 400 }} />
 <LottieAsset name="chart-bar" playbackRate={0.5} />

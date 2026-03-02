@@ -40,7 +40,8 @@ Every scene MUST have:
 4. An **ambient layer** via `Particles` từ remotion-bits (opacity < 0.15)
 5. **Hold frames** — elements stay still 2-3s after appearing for viewer to read
 6. **Scene transitions** via `@remotion/transitions` (fade/slide/wipe)
-7. **Timing derived from AUDIO_SEGMENTS** — no hardcoded frame numbers
+7. **Timing derived from AUDIO_SEGMENTS** — each sentence maps to a segment index (see below)
+8. **Layout using `LAYOUT` constants** from `~shared/layout` — no magic pixel numbers
 
 ## Visual Assets — Thứ tự ưu tiên
 
@@ -56,7 +57,7 @@ Every scene MUST have:
 ### Dùng `LottieAsset` component:
 
 ```tsx
-import { LottieAsset } from "@shared/LottieAsset";
+import { LottieAsset } from "~shared/LottieAsset";
 
 // Focal animation — chỉ cần 1 dòng
 <LottieAsset name="ai-brain" style={{ width: 400, height: 400 }} />
@@ -129,6 +130,89 @@ Giống Kurzgesagt, chỉ dùng **5 loại motion cơ bản** — implement bằ
 </Animated>
 ```
 
+## Multi-Segment Timing (BẮT BUỘC)
+
+`AUDIO_SEGMENTS` giờ chứa **nhiều segment per scene** — mỗi segment = 1 câu narration với `startFrame`/`endFrame` chính xác từ SRT timestamps.
+
+```ts
+// timeline.generated.ts — sentence-level timing
+"language": [
+  { startFrame: 15, endFrame: 120, text: "AI viết email, dịch thuật, tóm tắt văn bản.", file: "..." },
+  { startFrame: 121, endFrame: 280, text: "ChatGPT phục vụ hàng trăm triệu người.", file: "..." },
+  { startFrame: 281, endFrame: 389, text: "...mỗi tuần.", file: "..." }
+]
+```
+
+**Quy tắc timing:**
+
+```tsx
+const segments = AUDIO_SEGMENTS.language;
+
+// segments[0] → title + focal visual appear
+// segments[1] → cards/details appear
+// segments[2] → summary/counter appear
+
+// ĐÚNG: dùng segment startFrame trực tiếp
+<AnimatedText delay={segments[0].startFrame}>Title</AnimatedText>
+<Animated delay={segments[1].startFrame}><Cards /></Animated>
+<Animated delay={segments[2].startFrame}><Counter /></Animated>
+
+// SAI: arbitrary offset
+<Animated delay={startFrame + 80}>   // ← KHÔNG ĐƯỢC — 80 là gì?
+<Animated delay={startFrame + 120}>  // ← KHÔNG ĐƯỢC — không khớp narration
+```
+
+**Nếu scene chỉ có 1 segment** (fallback), chia thời lượng scene thành 3 phần đều:
+```tsx
+const seg = segments[0];
+const duration = seg.endFrame - seg.startFrame;
+const t1 = seg.startFrame;
+const t2 = seg.startFrame + Math.round(duration * 0.35);
+const t3 = seg.startFrame + Math.round(duration * 0.65);
+```
+
+## Layout Composition Rules (BẮT BUỘC)
+
+Import layout constants trong mọi scene:
+
+```tsx
+import { LAYOUT, ZONES, Z_INDEX } from "~shared/layout";
+```
+
+**Hard rules:**
+1. **Safe zone**: `LAYOUT.SAFE_ZONE` (80px) — không đặt content ngoài vùng này
+2. **Max 4 visual elements** per scene (focal + title + 1-2 supporting)
+3. **Focal point**: chiếm 30-50% canvas, đặt tại center hoặc left-third
+4. **Z-index layering**: `Z_INDEX.background` → `ambient` → `content` → `focal` → `text` → `subtitle`
+5. **No noise2D on content** — chỉ dùng noise2D cho ambient particles, KHÔNG cho cards/text
+6. **Spacing constants**: dùng `LAYOUT.COLUMN_GAP`, `LAYOUT.ROW_GAP` — KHÔNG magic numbers
+7. **Subtitle clearance**: content phải cách bottom ít nhất `LAYOUT.CONTENT_BOTTOM` (120px)
+
+**Layout zones** (dùng `ZONES` object):
+```tsx
+// Center-focus layout (Hook, CTA)
+<div style={{ ...ZONES.center, zIndex: Z_INDEX.content }}>
+  <LottieAsset ... />
+  <AnimatedText ...>Title</AnimatedText>
+</div>
+
+// Left-right split layout (Info, Data)
+<div style={{ ...ZONES.leftThird, zIndex: Z_INDEX.focal }}>
+  <LottieAsset ... />
+</div>
+<div style={{ ...ZONES.rightTwoThirds, zIndex: Z_INDEX.content }}>
+  <Cards ... />
+</div>
+
+// Top banner + content below (general)
+<div style={{ ...ZONES.topBanner, zIndex: Z_INDEX.text }}>
+  <AnimatedText ...>Title</AnimatedText>
+</div>
+<div style={{ ...ZONES.contentBelow, zIndex: Z_INDEX.content }}>
+  <StaggeredMotion ...>...</StaggeredMotion>
+</div>
+```
+
 ## Minimum Viable Scene
 
 Mỗi scene TỐI THIỂU phải có (bất kể model nào cũng PHẢI đạt):
@@ -137,37 +221,44 @@ Mỗi scene TỐI THIỂU phải có (bất kể model nào cũng PHẢI đạt)
 2. **Title**: `AnimatedText` với split word animation
 3. **Focal visual**: `LottieAsset` HOẶC Lucide icon + `Animated` HOẶC `@remotion/shapes`
 4. **Ambient**: `Particles` (opacity < 0.15)
-5. **Timing**: Derived từ `AUDIO_SEGMENTS` — KHÔNG hardcode delay numbers
+5. **Timing**: Derived từ `segments[0]`, `segments[1]`, etc. — KHÔNG hardcode delay numbers
+6. **Layout**: Dùng `LAYOUT`/`ZONES`/`Z_INDEX` constants — KHÔNG magic pixel numbers
 
 ```tsx
-// MINIMUM VIABLE SCENE — mọi scene ít nhất phải đạt mức này
+import { LAYOUT, ZONES, Z_INDEX } from "~shared/layout";
+
 export const MinimumScene: React.FC = () => {
-  const { fps } = useVideoConfig();
   const segments = AUDIO_SEGMENTS[sceneKey];
-  const startFrame = segments[0].startFrame;
 
   return (
     <AbsoluteFill>
-      {/* 1. Background */}
-      <GradientTransition gradient={[gradient1, gradient2]} duration={sceneDuration} style={{ position: "absolute", inset: 0 }} />
+      {/* z=0: Background */}
+      <GradientTransition gradient={[gradient1, gradient2]} duration={sceneDuration}
+        style={{ position: "absolute", inset: 0, zIndex: Z_INDEX.background }} />
 
-      {/* 2. Ambient */}
-      <Particles style={{ position: "absolute", inset: 0, opacity: 0.12 }}>
-        <Spawner rate={0.05} max={25} lifespan={90} velocity={{ x: 2, y: -4 }} area={{ width: 1920, height: 1080 }}>
+      {/* z=1: Ambient */}
+      <Particles style={{ position: "absolute", inset: 0, opacity: 0.12, zIndex: Z_INDEX.ambient }}>
+        <Spawner rate={0.05} max={25} lifespan={90} velocity={{ x: 2, y: -4 }}
+          area={{ width: LAYOUT.WIDTH, height: LAYOUT.HEIGHT }}>
           <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: COLORS.accentLight }} />
         </Spawner>
         <Behavior opacity={[0.12, 0]} />
       </Particles>
 
-      {/* 3. Focal visual — derive timing from AUDIO_SEGMENTS */}
-      <Animated animations={[Fade({ to: 1, initial: 0 }), Scale({ by: 1, initial: 0.7 })]} delay={startFrame + 10}>
-        <LottieAsset name="ai-brain" style={{ width: 350, height: 350 }} />
+      {/* z=3: Focal visual — timed to segments[0] */}
+      <Animated animations={[Fade({ to: 1, initial: 0 }), Scale({ by: 1, initial: 0.7 })]}
+        delay={segments[0].startFrame}>
+        <div style={{ ...ZONES.center, zIndex: Z_INDEX.focal }}>
+          <LottieAsset name="ai-brain" style={{ width: 350, height: 350 }} />
+        </div>
       </Animated>
 
-      {/* 4. Title text */}
+      {/* z=4: Title — timed to segments[1] (or segments[0] if only 1 segment) */}
       <AnimatedText
-        transition={{ split: "word", opacity: [0, 1], y: [30, 0], splitStagger: 4, duration: 25, delay: startFrame }}
-        style={{ fontFamily: FONT_FAMILY, fontSize: 48, fontWeight: 700, color: COLORS.white }}
+        transition={{ split: "word", opacity: [0, 1], y: [30, 0], splitStagger: 4, duration: 25,
+          delay: (segments[1] ?? segments[0]).startFrame }}
+        style={{ ...ZONES.topBanner, zIndex: Z_INDEX.text,
+          fontFamily: FONT_FAMILY, fontSize: 48, fontWeight: 700, color: COLORS.white }}
       >
         Scene title here
       </AnimatedText>
@@ -185,7 +276,11 @@ export const MinimumScene: React.FC = () => {
 - **Tự vẽ SVG phức tạp** (người, vật thể, cảnh) — dùng `LottieAsset` từ kho có sẵn
 - **Manual fade in/out giữa scenes** — dùng `TransitionSeries` + `fade()`
 - **`Math.sin` cho floating** — dùng `noise2D` từ `@remotion/noise`
-- **Hardcoded frame delays** (`delay={40}`, `delay={55}`) — derive từ `AUDIO_SEGMENTS`
+- **Hardcoded frame delays** (`delay={40}`, `delay={55}`) — dùng `segments[N].startFrame`
+- **Arbitrary offsets** (`startFrame + 80`, `+ 120`) — dùng segment index thay vì offset
+- **Magic pixel numbers** (`top: 200`, `left: 100`) — dùng `LAYOUT`/`ZONES` constants
+- **noise2D on content elements** (cards, text, icons) — chỉ dùng noise2D cho ambient particles
+- **>4 visual elements** cùng lúc trong 1 scene — gây clutter, khó focus
 - Visual xuất hiện trước/không liên quan narration
 - Animation liên tục không dừng — phải có hold frames
 - Ambient layer nổi bật hơn content (particles opacity > 0.15)
@@ -209,7 +304,8 @@ src/projects/[VideoName]/
     └── ...
 
 src/shared/
-└── LottieAsset.tsx          # Shared Lottie wrapper — dùng cho mọi video
+├── LottieAsset.tsx          # Shared Lottie wrapper — dùng cho mọi video
+└── layout.ts                # LAYOUT, ZONES, Z_INDEX, TYPOGRAPHY constants
 
 public/lottie/
 ├── manifest.json            # Asset catalog
@@ -252,10 +348,14 @@ export const FONT_FAMILY = "'Inter', sans-serif";
 - Body: 20-28px, weight 400-600
 - Label: 14-18px, weight 500-600
 
-### Spacing
+### Spacing (from `~shared/layout`)
 
-- Scene padding: 60-120px from edges
+- Safe zone: `LAYOUT.SAFE_ZONE` = 80px all sides
+- Content area: `LAYOUT.CONTENT_LEFT/RIGHT/TOP/BOTTOM`
+- Column gap: `LAYOUT.COLUMN_GAP` = 32px
+- Row gap: `LAYOUT.ROW_GAP` = 24px
 - Content should fill 60%+ of the 1920×1080 canvas
+- **LUÔN import `LAYOUT` thay vì hardcode pixel numbers**
 
 ## Main Composition Pattern (TransitionSeries)
 
@@ -353,7 +453,9 @@ export const Thumbnail: React.FC = () => (
 - [ ] **Library components** được dùng (AnimatedText, Particles, TransitionSeries, StaggeredMotion...)
 - [ ] **LottieAsset** hoặc icon composition cho focal point mỗi scene
 - [ ] **Không có manual interpolate/spring** khi library có sẵn
-- [ ] **Không có hardcoded frame delays** — all timing from AUDIO_SEGMENTS
+- [ ] **Timing from segments[N].startFrame** — no arbitrary offsets like +80
+- [ ] **Layout uses LAYOUT/ZONES constants** — no magic pixel numbers
+- [ ] **Max 4 visual elements per scene** — no clutter
 - [ ] Every scene has unique layout
 - [ ] `TransitionSeries` dùng cho chuyển cảnh (fade/slide/wipe)
 - [ ] Ambient layer via `Particles` từ remotion-bits

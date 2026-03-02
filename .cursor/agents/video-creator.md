@@ -20,16 +20,13 @@ Thực hiện **đúng thứ tự** 7 bước dưới đây.
 
 ## Bước 1 — Nghiên cứu
 
-Đọc `.cursor/skills/web-research/SKILL.md` và làm theo.
-
-- Nghiên cứu chủ đề từ internet, tổng hợp nguồn uy tín.
+- Dùng WebSearch để nghiên cứu chủ đề, tổng hợp 3-5 nguồn uy tín.
+- Tập trung: số liệu cụ thể, ví dụ thực tế, xu hướng mới nhất.
 - Lưu kết quả: `remotion_video/[tên-video]/research.md`
 
 ---
 
 ## Bước 2 — Kịch bản
-
-Đọc `.cursor/skills/content-research-writer/SKILL.md` và `.cursor/skills/explainer-video-guide/SKILL.md` rồi làm theo.
 
 Tùy loại nội dung, chọn cấu trúc kịch bản phù hợp:
 
@@ -61,15 +58,28 @@ Tùy loại nội dung, chọn cấu trúc kịch bản phù hợp:
 
 - Chạy: `python scripts/generate-tts.py --segments remotion_video/[tên-video]/segments.json --outdir public/audio/narration/[tên-video]`
 - Voice: vi-VN-NamMinhNeural (edge-tts).
+- Output: MP3 + SRT per segment (SRT chứa word-level timestamps, tự nhóm theo câu).
 
 ---
 
 ## Bước 4 — Sync timeline
 
-- Tạo script rebuild-timeline dùng ffprobe đo duration từng MP3 trong `public/audio/narration/[tên-video]/`.
+- Tạo script rebuild-timeline dựa trên template `scripts/rebuild-timeline.js`.
+- Script đọc MP3 (duration) + SRT (sentence timestamps) từ `public/audio/narration/[tên-video]/`.
+- Nếu có SRT → tạo **nhiều segment per scene** (sentence-level timing).
+- Nếu không có SRT → fallback 1 segment per scene.
 - Lưu: `scripts/rebuild-timeline-[tên-video].js`
 - Chạy: `node scripts/rebuild-timeline-[tên-video].js`
 - Tạo: `src/projects/[TenVideo]/timeline.generated.ts`
+
+**Output format** (multi-segment):
+```ts
+"hook": [
+  { startFrame: 15, endFrame: 120, text: "Câu 1...", file: "..." },
+  { startFrame: 121, endFrame: 250, text: "Câu 2...", file: "..." },
+  { startFrame: 251, endFrame: 330, text: "Câu 3...", file: "..." }
+]
+```
 
 ---
 
@@ -96,24 +106,25 @@ Sau đó đọc **BẮT BUỘC** theo thứ tự:
 
 Dùng component `LottieAsset` từ `src/shared/LottieAsset.tsx`:
 ```tsx
-import { LottieAsset } from "../shared/LottieAsset";
-// Chỉ cần:
+import { LottieAsset } from "~shared/LottieAsset";
 <LottieAsset name="ai-brain" style={{ width: 400, height: 400 }} />
 ```
 
 ### 5b. Lập Scene Concept Map (BẮT BUỘC)
 
-Map **mỗi câu narration** → visual element + component + timing:
+Map **mỗi câu narration** → segment index → visual element:
 
 ```
-| Scene | Narration Key Phrase | Visual Element | Component | Lottie/Icon | Timing (derive from) |
-|-------|---------------------|----------------|-----------|-------------|---------------------|
-| Hook  | "AI có thể làm gì?" | Brain animation | LottieAsset + Animated(Scale) | ai-brain | AUDIO_SEGMENTS.hook[0].startFrame |
-| Hook  | "5 nhóm năng lực"   | 5 category icons | StaggeredMotion + Lucide | Brain,Eye,Database,Code2,Bot | startFrame + 60 |
-| Info  | "viết email, dịch thuật" | Feature cards | StaggeredMotion | (Lucide icons) | AUDIO_SEGMENTS.text[0].startFrame |
+| Scene | Segment Index | Narration Sentence | Visual Element | Component | Lottie/Icon |
+|-------|--------------|-------------------|----------------|-----------|-------------|
+| Hook  | segments[0]  | "AI có thể làm gì?" | Brain animation | LottieAsset + Animated(Scale) | ai-brain |
+| Hook  | segments[1]  | "Câu trả lời sẽ khiến bạn bất ngờ" | Title text | AnimatedText | — |
+| Hook  | segments[2]  | "5 nhóm năng lực chính" | Counter | AnimatedCounter | — |
+| Info  | segments[0]  | "Ngôn ngữ và giao tiếp" | Title + Lottie | AnimatedText + LottieAsset | ai-network |
+| Info  | segments[1]  | "AI viết email, dịch thuật" | Feature cards | StaggeredMotion + Lucide | (icons) |
 ```
 
-**QUAN TRỌNG**: Timing PHẢI derive từ `AUDIO_SEGMENTS`, KHÔNG hardcode số frame.
+**QUAN TRỌNG**: Timing = `segments[N].startFrame`. KHÔNG dùng arbitrary offsets (`startFrame + 80`).
 
 ### 5c. Lập bảng Scene Plan (BẮT BUỘC)
 
@@ -141,12 +152,15 @@ Chọn template theo loại scene (CHỈ CẦN CHỌN, không cần sáng tạo)
 ### Quy tắc Scene Plan:
 - **Mỗi scene PHẢI có 1 visual focal point**: LottieAsset HOẶC Lucide icon composition HOẶC @remotion/shapes
 - **Mỗi scene PHẢI dùng library components** (AnimatedText, Animated, Particles, StaggeredMotion...)
+- **Mỗi scene PHẢI import `LAYOUT`/`ZONES`/`Z_INDEX`** từ `~shared/layout`
+- **Max 4 visual elements** per scene (focal + title + 1-2 supporting)
+- Timing: map mỗi câu narration → `segments[N].startFrame`
 - Không 2 scene liền kề dùng cùng template hoặc layout
 - Không 2 scene liền kề dùng cùng transition type
 - Không 2 scene liền kề dùng cùng Lottie asset
 - Mỗi scene có ambient layer via `Particles` (opacity < 0.15)
-- `noise2D` cho organic floating (thay Math.sin)
 - Tất cả colors từ `COLORS.*`, rotate accent color giữa scenes
+- Không dùng noise2D cho content elements (cards, text) — chỉ cho ambient
 - Không dùng emoji — dùng `lucide-react` icons hoặc `@remotion/animated-emoji`
 
 ### Minimum Viable Scene (TỐI THIỂU mỗi scene phải có):
@@ -155,14 +169,16 @@ Chọn template theo loại scene (CHỈ CẦN CHỌN, không cần sáng tạo)
 2. `AnimatedText` cho title/headline
 3. 1 focal visual: `LottieAsset` HOẶC Lucide icon + `Animated` HOẶC `@remotion/shapes`
 4. `Particles` ambient layer (opacity < 0.15)
-5. Timing derived từ `AUDIO_SEGMENTS` (KHÔNG hardcode frame numbers)
+5. Timing từ `segments[N].startFrame` — KHÔNG dùng arbitrary offsets
+6. Layout dùng `LAYOUT`/`ZONES`/`Z_INDEX` từ `~shared/layout` — KHÔNG magic pixel numbers
+7. Max 4 visual elements (focal + title + 1-2 supporting)
 
 ---
 
 ## Bước 6 — Remotion composition
 
-Đọc `.cursor/skills/remotion-best-practices/SKILL.md` cho Remotion API reference.
 Đọc `.cursor/skills/pro-video-creator/references/scene-blueprints.md` cho concrete scene examples.
+Khi cần tra cứu Remotion API cụ thể (captions, audio, timing...), đọc rule tương ứng trong `.cursor/skills/remotion-best-practices/rules/`.
 
 Implement theo Scene Plan ở Bước 5:
 
@@ -196,13 +212,14 @@ export const MyVideo: React.FC = () => (
 ```
 
 ### Mỗi scene PHẢI:
-1. Có layout **khác biệt** với scene trước và sau
+1. Có layout **khác biệt** với scene trước và sau, dùng `ZONES` constants
 2. Có **visual focal point**: LottieAsset, icon composition, hoặc data viz
 3. Dùng **library components**: `AnimatedText`, `Animated`, `Particles`, `StaggeredMotion`, `AnimatedCounter`, etc.
-4. Dùng `noise2D` cho organic motion (thay `Math.sin`)
-5. **Hold frames** — elements đứng yên 2-3s sau entrance
-6. Ambient layer via `Particles` (opacity < 0.15)
-7. **Timing từ AUDIO_SEGMENTS** — không hardcode delays
+4. **Hold frames** — elements đứng yên 2-3s sau entrance
+5. Ambient layer via `Particles` (opacity < 0.15, `zIndex: Z_INDEX.ambient`)
+6. **Timing từ `segments[N].startFrame`** — KHÔNG arbitrary offsets
+7. **Max 4 visual elements** — focal + title + 1-2 supporting, no clutter
+8. **Z-index layering**: background(0) → ambient(1) → content(2) → focal(3) → text(4)
 
 ### Import pattern cho mỗi scene:
 
@@ -210,8 +227,8 @@ export const MyVideo: React.FC = () => (
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import { Animated, Move, Scale, Fade } from "remotion-animated";
 import { AnimatedText, Particles, Spawner, Behavior, StaggeredMotion } from "remotion-bits";
-import { noise2D } from "@remotion/noise";
-import { LottieAsset } from "@shared/LottieAsset";
+import { LottieAsset } from "~shared/LottieAsset";
+import { LAYOUT, ZONES, Z_INDEX } from "~shared/layout";
 import { COLORS, FONT_FAMILY, AUDIO_SEGMENTS } from "../constants";
 ```
 
@@ -221,7 +238,11 @@ import { COLORS, FONT_FAMILY, AUDIO_SEGMENTS } from "../constants";
 - **Tự viết typing effect** khi `TypeWriter`/`AnimatedText` có sẵn
 - **Tự vẽ SVG phức tạp** (người, vật thể, cảnh) — dùng `LottieAsset` từ kho có sẵn
 - **Manual fade in/out** khi `TransitionSeries` xử lý
-- **Hardcode frame delays** — derive từ `AUDIO_SEGMENTS`
+- **Arbitrary offsets** (`startFrame + 80`, `+ 120`) — dùng `segments[N].startFrame`
+- **Hardcode delay numbers** (`delay={40}`, `delay={55}`)
+- **Magic pixel numbers** (`top: 200`, `left: 100`) — dùng `LAYOUT`/`ZONES` constants
+- **noise2D on content** (cards, text, icons) — chỉ cho ambient particles
+- **>4 visual elements** cùng lúc — gây clutter
 - Copy-paste layout giữa scenes
 - `useState`/CSS transitions cho animation
 
