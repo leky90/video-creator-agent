@@ -8,19 +8,15 @@ build/
 # Remotion output
 out/
 
-# Generated files (re-generate per video)
-src/*/timeline.generated.ts
+# Video projects (generated per video, not committed)
+src/projects/
+
+# Generated files
 scripts/rebuild-timeline-*.js
 !scripts/rebuild-timeline.js
 
 # TTS audio (re-generate from segments.json)
 public/audio/
-
-# Fetched images (re-download per video)
-public/images/
-
-# Lottie downloads
-public/lottie/
 
 # Video project data (research, segments — per video)
 remotion_video/
@@ -49,5 +45,3 @@ Desktop.ini
 .cursor/skills/remotion-video-toolkit/
 .cursor/skills/unsplash/
 
-# Deprecated assets dir
-public/assets/

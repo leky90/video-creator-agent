@@ -6,21 +6,21 @@ Danh sách đầy đủ các library đã cài đặt. **LUÔN dùng library tha
 
 ## 1. `remotion-bits` — Production Components (ƯU TIÊN SỐ 1)
 
-Thư viện component chuyên nghiệp, thay thế hầu hết component tự viết.
+Thư viện component chuyên nghiệp cho video production.
 
-### AnimatedText — Thay thế TypingEffect, GradientText
+### AnimatedText
 
 ```tsx
 import { AnimatedText } from "remotion-bits";
 
-// Word-by-word fade + slide (thay TypingEffect)
+// Word-by-word fade + slide
 <AnimatedText
   transition={{
-    split: "word",        // "word" | "character" | "line"
+    split: "word",            // "word" | "character" | "line"
     opacity: [0, 1],
     y: [40, 0],
-    blur: [8, 0],         // blur effect khi xuất hiện
-    stagger: 3,           // frames giữa mỗi word
+    blur: [8, 0],             // blur effect khi xuất hiện
+    splitStagger: 3,          // frames giữa mỗi word (LƯU Ý: splitStagger, không phải stagger)
     duration: 30,
   }}
   style={{ fontSize: 48, color: COLORS.white, fontWeight: 700 }}
@@ -35,7 +35,7 @@ import { AnimatedText } from "remotion-bits";
     opacity: [0, 1],
     rotate: [15, 0],
     scale: [0.5, 1],
-    stagger: 1,
+    splitStagger: 1,          // splitStagger cho AnimatedText
     duration: 20,
   }}
   style={{ fontSize: 64, color: COLORS.accent }}
@@ -44,7 +44,7 @@ import { AnimatedText } from "remotion-bits";
 </AnimatedText>
 ```
 
-### AnimatedCounter — Thay thế AnimatedCounter tự viết
+### AnimatedCounter
 
 ```tsx
 import { AnimatedCounter } from "remotion-bits";
@@ -57,7 +57,7 @@ import { AnimatedCounter } from "remotion-bits";
 />
 ```
 
-### Particles — Thay thế ParticleField tự viết (physics-based, đẹp hơn nhiều)
+### Particles
 
 ```tsx
 import { Particles, Spawner, Behavior } from "remotion-bits";
@@ -74,7 +74,7 @@ import { Particles, Spawner, Behavior } from "remotion-bits";
   style={{ position: "absolute", inset: 0 }}
 />
 
-// Drifting ambient particles (thay ParticleField)
+// Drifting ambient particles
 <Particles
   spawner={Spawner.continuous({ rate: 2, maxParticles: 30 })}
   behaviors={[
@@ -97,15 +97,16 @@ import { Particles, Spawner, Behavior } from "remotion-bits";
 />
 ```
 
-### StaggeredMotion — Thay thế manual stagger với spring()
+### StaggeredMotion
 
 ```tsx
 import { StaggeredMotion } from "remotion-bits";
 
+// stagger và staggerDirection nằm TRONG transition, KHÔNG phải top-level props
 <StaggeredMotion
-  stagger={5}           // frames giữa mỗi child
-  direction="forward"   // "forward" | "reverse" | "center"
   transition={{
+    stagger: 5,                    // frames giữa mỗi child
+    staggerDirection: "forward",   // "forward" | "reverse" | "center" | "random"
     opacity: [0, 1],
     y: [30, 0],
     scale: [0.8, 1],
@@ -124,7 +125,7 @@ import { StaggeredMotion } from "remotion-bits";
 import { GradientTransition } from "remotion-bits";
 
 <GradientTransition
-  gradients={[
+  gradient={[
     "linear-gradient(135deg, #0f172a, #1e293b)",
     "linear-gradient(135deg, #1e293b, #3b82f6)",
     "linear-gradient(135deg, #3b82f6, #22c55e)",
@@ -141,9 +142,9 @@ import { TypeWriter } from "remotion-bits";
 
 <TypeWriter
   text="Hello World"
-  speed={3}             // frames per character
-  cursor="|"
-  cursorBlinkSpeed={15}
+  typeSpeed={3}         // frames per character (default: 3)
+  cursor={true}         // boolean hoặc ReactNode (default: true, shows "|")
+  blinkSpeed={30}       // cursor blink cycle in frames (default: 30)
   style={{ fontSize: 24, fontFamily: "monospace", color: COLORS.accent }}
 />
 ```
@@ -157,7 +158,7 @@ import { CodeBlock } from "remotion-bits";
   code={`const result = await ai.generate("Hello");`}
   language="typescript"
   theme="dark"
-  animateIn={true}
+  transition={{ opacity: [0, 1], duration: 30 }}
   style={{ width: 800 }}
 />
 ```
@@ -193,10 +194,13 @@ import { Scene3D, Step, Element3D } from "remotion-bits";
 import { ScrollingColumns } from "remotion-bits";
 
 <ScrollingColumns
-  columns={3}
-  speed={1}
-  direction="up"
-  items={imageUrls.map(url => <Img src={url} />)}
+  columns={[
+    { images: ["/img1.jpg", "/img2.jpg", "/img3.jpg"], speed: 1, direction: "up" },
+    { images: ["/img4.jpg", "/img5.jpg", "/img6.jpg"], speed: 0.8, direction: "down" },
+    { images: ["/img7.jpg", "/img8.jpg", "/img9.jpg"], speed: 1.2, direction: "up" },
+  ]}
+  gap={8}
+  style={{ width: 800, height: 600 }}
 />
 ```
 
@@ -329,7 +333,7 @@ import { Circle, Rect, Star, Triangle, Pie, Ellipse, Polygon } from "@remotion/s
 />
 ```
 
-**Thay thế:** ProgressRing tự viết → dùng `Pie` với `progress` animated.
+**Tip:** Dùng `Pie` với `progress` animated cho progress indicators.
 
 ---
 
@@ -439,23 +443,24 @@ import { AnimatedEmoji } from "@remotion/animated-emoji";
 
 ---
 
-## Bảng thay thế: Tự viết → Library
+## Quick Reference: Nên dùng gì cho nhu cầu nào
 
-| Component tự viết | Thay bằng | Library |
+| Nhu cầu | Dùng | Library |
 |---|---|---|
-| `ParticleField` | `Particles` + `Spawner` + `Behavior` | remotion-bits |
-| `TypingEffect` | `AnimatedText` (split: "character") hoặc `TypeWriter` | remotion-bits |
-| `AnimatedCounter` | `AnimatedCounter` | remotion-bits |
-| `GradientText` | `AnimatedText` với gradient style | remotion-bits |
-| `SpringBadge` | `StaggeredMotion` + `Animated` | remotion-bits + remotion-animated |
-| `ProgressRing` | `Pie` từ `@remotion/shapes` + animated progress | @remotion/shapes |
-| `PulsingGlow` | `Animated` với Scale animation loop | remotion-animated |
-| `AmbientGlow` | `GradientTransition` | remotion-bits |
-| Manual fade in/out | `TransitionSeries` + `fade()`/`slide()`/`wipe()` | @remotion/transitions |
-| Manual `interpolate()` chains | `Animated` component | remotion-animated |
-| Manual `Math.sin` floating | `noise2D` | @remotion/noise |
-| Custom SVG shapes | `Circle`, `Star`, `Pie`, `Triangle` | @remotion/shapes |
-| Custom path draw | `evolvePath` | @remotion/paths |
+| Particle effects, ambient | `Particles` + `Spawner` + `Behavior` | remotion-bits |
+| Text animation (word/char) | `AnimatedText` (split: "character"/"word") | remotion-bits |
+| Typewriter effect | `TypeWriter` | remotion-bits |
+| Counting numbers | `AnimatedCounter` | remotion-bits |
+| Gradient text | `AnimatedText` với gradient style | remotion-bits |
+| Staggered items | `StaggeredMotion` + `Animated` | remotion-bits + remotion-animated |
+| Progress indicator | `Pie` + animated progress | @remotion/shapes |
+| Pulsing/scaling animation | `Animated` với Scale animation | remotion-animated |
+| Gradient backgrounds | `GradientTransition` | remotion-bits |
+| Scene transitions | `TransitionSeries` + `fade()`/`slide()`/`wipe()` | @remotion/transitions |
+| Declarative animation chains | `Animated` component | remotion-animated |
+| Organic floating motion | `noise2D` | @remotion/noise |
+| Geometric shapes | `Circle`, `Star`, `Pie`, `Triangle` | @remotion/shapes |
+| SVG path animation | `evolvePath` | @remotion/paths |
 
 ---
 

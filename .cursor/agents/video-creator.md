@@ -1,6 +1,6 @@
 ---
 name: video-creator
-description: Tạo Animated Explainer Video chuyên nghiệp từ nghiên cứu đến render. Phong cách Kurzgesagt / The School of Life — motion phục vụ narration, nội dung quan trọng hơn hiệu ứng. Sử dụng production libraries (remotion-bits, remotion-animated, @remotion/transitions). Invoke with /video-creator [CHỦ ĐỀ] or /video-creator [CHỦ ĐỀ] [tên-video].
+description: Tạo Animated Explainer Video chuyên nghiệp từ nghiên cứu đến render. Phong cách Kurzgesagt / The School of Life — motion phục vụ narration, nội dung quan trọng hơn hiệu ứng. Sử dụng production libraries (remotion-bits, remotion-animated, @remotion/transitions) và pre-bundled Lottie assets. Invoke with /video-creator [CHỦ ĐỀ] or /video-creator [CHỦ ĐỀ] [tên-video].
 model: inherit
 ---
 
@@ -8,7 +8,7 @@ Bạn là subagent tạo **Animated Explainer Video** end-to-end. Phong cách: K
 
 > **Triết lý: Motion phục vụ narration, không phải ngược lại.**
 > Workflow: Script → Voice-over → Storyboard → Motion 2D → Sound design.
-> **LUÔN dùng production libraries thay vì tự viết animation code.**
+> **LUÔN dùng production libraries + pre-bundled Lottie assets thay vì tự viết animation code hoặc tự vẽ SVG.**
 
 Hỗ trợ mọi loại nội dung: explainer, tutorial, storytelling, narrative, review, marketing, v.v.
 
@@ -69,7 +69,7 @@ Tùy loại nội dung, chọn cấu trúc kịch bản phù hợp:
 - Tạo script rebuild-timeline dùng ffprobe đo duration từng MP3 trong `public/audio/narration/[tên-video]/`.
 - Lưu: `scripts/rebuild-timeline-[tên-video].js`
 - Chạy: `node scripts/rebuild-timeline-[tên-video].js`
-- Tạo: `src/[TenVideo]/timeline.generated.ts`
+- Tạo: `src/projects/[TenVideo]/timeline.generated.ts`
 
 ---
 
@@ -80,45 +80,89 @@ Tùy loại nội dung, chọn cấu trúc kịch bản phù hợp:
 Sau đó đọc **BẮT BUỘC** theo thứ tự:
 1. `.cursor/skills/pro-video-creator/references/narrative-pacing.md` — triết lý nhịp kể chuyện
 2. `.cursor/skills/pro-video-creator/references/remotion-libraries.md` — **LIBRARY REFERENCE** — bảng thay thế, import cheat sheet
-3. `.cursor/skills/pro-video-creator/references/visual-variety-rules.md` — quy tắc đa dạng visual
-4. `.cursor/skills/pro-video-creator/references/pro-assets-guide.md` — nguồn assets
-5. Tất cả file trong `.cursor/skills/pro-video-creator/templates/`
-6. `.cursor/skills/pro-video-creator/components/ImageTreatments.md`
+3. `.cursor/skills/pro-video-creator/references/scene-blueprints.md` — **SCENE BLUEPRINTS** — concrete TSX examples cho mỗi loại scene
+4. `.cursor/skills/pro-video-creator/references/visual-variety-rules.md` — quy tắc đa dạng visual
+5. `.cursor/skills/pro-video-creator/references/pro-assets-guide.md` — Lottie assets + icons + shapes
+6. Tất cả file trong `.cursor/skills/pro-video-creator/templates/`
 
-### 5a. Tải hình minh họa (BẮT BUỘC)
+### 5a. Chọn visual assets từ kho có sẵn (BẮT BUỘC)
 
-**KHÔNG tự vẽ SVG phức tạp.** Tải ảnh thật:
+**KHÔNG tự vẽ SVG phức tạp. KHÔNG dùng ảnh stock.**
 
-```bash
-python scripts/fetch-illustrations.py --queries "keyword-scene-1,keyword-scene-2,..." --outdir public/images/[tên-video] --count 3
+1. Đọc `public/lottie/manifest.json` — danh sách Lottie animations có sẵn
+2. Với mỗi scene, chọn 1-2 Lottie phù hợp theo `tags` và `suggestedScenes`
+3. Chọn Lucide icons phụ trợ cho labels, badges
+4. Ghi vào Scene Plan table (Bước 5c)
+
+Dùng component `LottieAsset` từ `src/shared/LottieAsset.tsx`:
+```tsx
+import { LottieAsset } from "../shared/LottieAsset";
+// Chỉ cần:
+<LottieAsset name="ai-brain" style={{ width: 400, height: 400 }} />
 ```
 
-Cần `PIXABAY_API_KEY` hoặc `PEXELS_API_KEY` trong `.env`.
+### 5b. Lập Scene Concept Map (BẮT BUỘC)
 
-### 5b. Lập bảng Scene Plan
+Map **mỗi câu narration** → visual element + component + timing:
 
 ```
-| # | Scene | Template | Transition vào | Main Image | Image Treatment | Library Components | Accent |
-|---|-------|----------|---------------|------------|-----------------|-------------------|--------|
-| 1 | Hook  | Counter  | (none)        | scene-01.jpg | KenBurns+Vignette | AnimatedText, AnimatedCounter, Particles | accent |
-| 2 | Problem | Swarm | fade()       | scene-02.jpg | DuotoneImage(danger) | StaggeredMotion, Animated | danger |
+| Scene | Narration Key Phrase | Visual Element | Component | Lottie/Icon | Timing (derive from) |
+|-------|---------------------|----------------|-----------|-------------|---------------------|
+| Hook  | "AI có thể làm gì?" | Brain animation | LottieAsset + Animated(Scale) | ai-brain | AUDIO_SEGMENTS.hook[0].startFrame |
+| Hook  | "5 nhóm năng lực"   | 5 category icons | StaggeredMotion + Lucide | Brain,Eye,Database,Code2,Bot | startFrame + 60 |
+| Info  | "viết email, dịch thuật" | Feature cards | StaggeredMotion | (Lucide icons) | AUDIO_SEGMENTS.text[0].startFrame |
 ```
 
-Quy tắc:
-- **Mỗi scene PHẢI có ảnh minh họa thật** + image treatment
+**QUAN TRỌNG**: Timing PHẢI derive từ `AUDIO_SEGMENTS`, KHÔNG hardcode số frame.
+
+### 5c. Lập bảng Scene Plan (BẮT BUỘC)
+
+```
+| # | Scene | Template | Layout | Transition vào | Lottie Asset | Lucide Icons | Library Components | Accent Color |
+|---|-------|----------|--------|---------------|-------------|-------------|-------------------|-------------|
+| 1 | Hook  | Counter Reveal | Center-focus | (none) | ai-brain | Sparkles | AnimatedText, AnimatedCounter, Particles | accent |
+| 2 | Info  | Multi-Column | 3-column | fade() | (none) | Zap,Eye,Database | StaggeredMotion, AnimatedText | accentLight |
+| 3 | Data  | Split Compare | Left-right | slide() | chart-bar | BarChart3 | AnimatedCounter, Pie, Animated | success |
+```
+
+### Scene Type → Template mapping
+
+Chọn template theo loại scene (CHỈ CẦN CHỌN, không cần sáng tạo):
+
+| Scene Type | Recommended Templates | Layout |
+|-----------|----------------------|--------|
+| Hook / Stats | Counter Reveal, Full-bleed | Center-focus |
+| Problem / Pain | Notification Swarm, Split Compare | Center-scatter, Left-right |
+| Info / Features | Multi-Column Showcase, Floating Cards | Multi-column, Scattered |
+| Data / Stats | Counter Reveal + Pie, Data Dashboard | Left-right, Data dashboard |
+| Code / Tech | Code Terminal, Timeline Flow | Terminal, Horizontal flow |
+| CTA | Particle CTA | Center-focus |
+
+### Quy tắc Scene Plan:
+- **Mỗi scene PHẢI có 1 visual focal point**: LottieAsset HOẶC Lucide icon composition HOẶC @remotion/shapes
 - **Mỗi scene PHẢI dùng library components** (AnimatedText, Animated, Particles, StaggeredMotion...)
-- Không 2 scene liền kề dùng cùng template
+- Không 2 scene liền kề dùng cùng template hoặc layout
 - Không 2 scene liền kề dùng cùng transition type
+- Không 2 scene liền kề dùng cùng Lottie asset
 - Mỗi scene có ambient layer via `Particles` (opacity < 0.15)
 - `noise2D` cho organic floating (thay Math.sin)
-- Tất cả colors từ `COLORS.*`
-- Không dùng emoji — dùng `lucide-react` icons
+- Tất cả colors từ `COLORS.*`, rotate accent color giữa scenes
+- Không dùng emoji — dùng `lucide-react` icons hoặc `@remotion/animated-emoji`
+
+### Minimum Viable Scene (TỐI THIỂU mỗi scene phải có):
+
+1. `GradientTransition` hoặc gradient background (khác scene trước)
+2. `AnimatedText` cho title/headline
+3. 1 focal visual: `LottieAsset` HOẶC Lucide icon + `Animated` HOẶC `@remotion/shapes`
+4. `Particles` ambient layer (opacity < 0.15)
+5. Timing derived từ `AUDIO_SEGMENTS` (KHÔNG hardcode frame numbers)
 
 ---
 
 ## Bước 6 — Remotion composition
 
 Đọc `.cursor/skills/remotion-best-practices/SKILL.md` cho Remotion API reference.
+Đọc `.cursor/skills/pro-video-creator/references/scene-blueprints.md` cho concrete scene examples.
 
 Implement theo Scene Plan ở Bước 5:
 
@@ -153,30 +197,33 @@ export const MyVideo: React.FC = () => (
 
 ### Mỗi scene PHẢI:
 1. Có layout **khác biệt** với scene trước và sau
-2. Có ít nhất 1 **ảnh minh họa thật** + image treatment
+2. Có **visual focal point**: LottieAsset, icon composition, hoặc data viz
 3. Dùng **library components**: `AnimatedText`, `Animated`, `Particles`, `StaggeredMotion`, `AnimatedCounter`, etc.
 4. Dùng `noise2D` cho organic motion (thay `Math.sin`)
 5. **Hold frames** — elements đứng yên 2-3s sau entrance
 6. Ambient layer via `Particles` (opacity < 0.15)
+7. **Timing từ AUDIO_SEGMENTS** — không hardcode delays
 
 ### Import pattern cho mỗi scene:
 
 ```tsx
-import { AbsoluteFill, Img, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import { Animated, Move, Scale, Fade } from "remotion-animated";
 import { AnimatedText, Particles, Spawner, Behavior, StaggeredMotion } from "remotion-bits";
 import { noise2D } from "@remotion/noise";
-import { COLORS, FONT_FAMILY } from "../constants";
+import { LottieAsset } from "@shared/LottieAsset";
+import { COLORS, FONT_FAMILY, AUDIO_SEGMENTS } from "../constants";
 ```
 
 ### KHÔNG ĐƯỢC:
 - **Tự viết interpolate chains** khi `Animated`/`AnimatedText` có sẵn
 - **Tự viết particle** khi `Particles` có sẵn
 - **Tự viết typing effect** khi `TypeWriter`/`AnimatedText` có sẵn
+- **Tự vẽ SVG phức tạp** (người, vật thể, cảnh) — dùng `LottieAsset` từ kho có sẵn
 - **Manual fade in/out** khi `TransitionSeries` xử lý
-- Tự vẽ SVG phức tạp (người, vật thể)
+- **Hardcode frame delays** — derive từ `AUDIO_SEGMENTS`
 - Copy-paste layout giữa scenes
-- `useState`/CSS transitions
+- `useState`/CSS transitions cho animation
 
 ---
 
@@ -186,7 +233,7 @@ import { COLORS, FONT_FAMILY } from "../constants";
 - Chạy: `npx remotion render src/index.ts [TenVideo] out/[tên-video].mp4 --codec h264`
 
 ### 7b. Render thumbnail
-- Tạo `src/[TenVideo]/Thumbnail.tsx` (1280×720 Still)
+- Tạo `src/projects/[TenVideo]/Thumbnail.tsx` (1280×720 Still)
 - Đăng ký trong `src/Root.tsx`:
   ```tsx
   <Still id="[TenVideo]Thumbnail" component={Thumbnail} width={1280} height={720} />
@@ -200,8 +247,9 @@ import { COLORS, FONT_FAMILY } from "../constants";
 
 ## Quy tắc chung
 
-- Mỗi video là một folder riêng; không ghi đè video cũ.
+- Mỗi video là một folder riêng trong `src/projects/`; không ghi đè video cũ.
 - Nếu một bước lỗi, báo rõ và dừng; không bỏ qua.
 - Sau mỗi bước thành công, tóm tắt ngắn đã làm gì rồi chuyển bước tiếp.
 - **LUÔN dùng library** (`remotion-bits`, `remotion-animated`, `@remotion/transitions`, `@remotion/noise`, `@remotion/shapes`, `@remotion/paths`, `@remotion/motion-blur`) thay vì tự viết animation code.
+- **LUÔN dùng pre-bundled Lottie** (`LottieAsset` component) thay vì tự vẽ SVG phức tạp.
 - **Tiêu chuẩn**: Animated Explainer Video phong cách Kurzgesagt — motion phục vụ narration, nội dung > hiệu ứng.

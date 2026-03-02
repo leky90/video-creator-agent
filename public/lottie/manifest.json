@@ -1,0 +1,725 @@
+[
+  {
+    "name": "ai-brain",
+    "category": "ai",
+    "tags": [
+      "AI",
+      "neural network",
+      "brain",
+      "intelligence",
+      "thinking"
+    ],
+    "file": "lottie/ai/ai-brain.json",
+    "sizeKB": 108.0,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "hook",
+      "solution",
+      "info"
+    ]
+  },
+  {
+    "name": "ai-robot",
+    "category": "ai",
+    "tags": [
+      "AI",
+      "robot",
+      "assistant",
+      "chatbot",
+      "automation"
+    ],
+    "file": "lottie/ai/ai-robot.json",
+    "sizeKB": 104.4,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "hook",
+      "solution",
+      "automation"
+    ]
+  },
+  {
+    "name": "ai-chip",
+    "category": "ai",
+    "tags": [
+      "AI",
+      "chip",
+      "processor",
+      "CPU",
+      "hardware",
+      "technology"
+    ],
+    "file": "lottie/ai/ai-chip.json",
+    "sizeKB": 27.1,
+    "suggestedSize": {
+      "width": 350,
+      "height": 350
+    },
+    "suggestedScenes": [
+      "solution",
+      "tech"
+    ]
+  },
+  {
+    "name": "ai-network",
+    "category": "ai",
+    "tags": [
+      "AI",
+      "network",
+      "nodes",
+      "connected",
+      "neural",
+      "graph"
+    ],
+    "file": "lottie/ai/ai-network.json",
+    "sizeKB": 282.6,
+    "suggestedSize": {
+      "width": 500,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "info",
+      "solution",
+      "hook"
+    ]
+  },
+  {
+    "name": "ai-learning",
+    "category": "ai",
+    "tags": [
+      "AI",
+      "machine learning",
+      "training",
+      "model",
+      "education"
+    ],
+    "file": "lottie/ai/ai-learning.json",
+    "sizeKB": 163.9,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "info",
+      "solution"
+    ]
+  },
+  {
+    "name": "coding",
+    "category": "tech",
+    "tags": [
+      "code",
+      "programming",
+      "developer",
+      "software",
+      "typing"
+    ],
+    "file": "lottie/tech/coding.json",
+    "sizeKB": 81.6,
+    "suggestedSize": {
+      "width": 500,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "code",
+      "tech"
+    ]
+  },
+  {
+    "name": "terminal",
+    "category": "tech",
+    "tags": [
+      "terminal",
+      "console",
+      "CLI",
+      "command line",
+      "shell"
+    ],
+    "file": "lottie/tech/terminal.json",
+    "sizeKB": 5.5,
+    "suggestedSize": {
+      "width": 500,
+      "height": 350
+    },
+    "suggestedScenes": [
+      "code",
+      "tech"
+    ]
+  },
+  {
+    "name": "cloud",
+    "category": "tech",
+    "tags": [
+      "cloud",
+      "computing",
+      "server",
+      "hosting",
+      "SaaS"
+    ],
+    "file": "lottie/tech/cloud.json",
+    "sizeKB": 11.6,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "tech",
+      "solution"
+    ]
+  },
+  {
+    "name": "server",
+    "category": "tech",
+    "tags": [
+      "server",
+      "database",
+      "hosting",
+      "infrastructure",
+      "backend"
+    ],
+    "file": "lottie/tech/server.json",
+    "sizeKB": 203.1,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "tech",
+      "info"
+    ]
+  },
+  {
+    "name": "api",
+    "category": "tech",
+    "tags": [
+      "API",
+      "connection",
+      "integration",
+      "sync",
+      "data transfer"
+    ],
+    "file": "lottie/tech/api.json",
+    "sizeKB": 362.9,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "tech",
+      "info"
+    ]
+  },
+  {
+    "name": "security",
+    "category": "tech",
+    "tags": [
+      "security",
+      "shield",
+      "lock",
+      "protection",
+      "privacy"
+    ],
+    "file": "lottie/tech/security.json",
+    "sizeKB": 0.6,
+    "suggestedSize": {
+      "width": 350,
+      "height": 350
+    },
+    "suggestedScenes": [
+      "info",
+      "solution"
+    ]
+  },
+  {
+    "name": "chart-bar",
+    "category": "data",
+    "tags": [
+      "chart",
+      "bar chart",
+      "analytics",
+      "statistics",
+      "growth"
+    ],
+    "file": "lottie/data/chart-bar.json",
+    "sizeKB": 203.1,
+    "suggestedSize": {
+      "width": 500,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "data",
+      "stats"
+    ]
+  },
+  {
+    "name": "chart-pie",
+    "category": "data",
+    "tags": [
+      "chart",
+      "pie chart",
+      "distribution",
+      "percentage",
+      "ratio"
+    ],
+    "file": "lottie/data/chart-pie.json",
+    "sizeKB": 358.2,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "data",
+      "stats"
+    ]
+  },
+  {
+    "name": "chart-line",
+    "category": "data",
+    "tags": [
+      "chart",
+      "line chart",
+      "trend",
+      "growth",
+      "time series"
+    ],
+    "file": "lottie/data/chart-line.json",
+    "sizeKB": 2.3,
+    "suggestedSize": {
+      "width": 500,
+      "height": 350
+    },
+    "suggestedScenes": [
+      "data",
+      "stats",
+      "hook"
+    ]
+  },
+  {
+    "name": "database",
+    "category": "data",
+    "tags": [
+      "database",
+      "storage",
+      "data",
+      "SQL",
+      "records"
+    ],
+    "file": "lottie/data/database.json",
+    "sizeKB": 190.5,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "data",
+      "tech"
+    ]
+  },
+  {
+    "name": "analytics",
+    "category": "data",
+    "tags": [
+      "analytics",
+      "dashboard",
+      "metrics",
+      "KPI",
+      "monitoring"
+    ],
+    "file": "lottie/data/analytics.json",
+    "sizeKB": 200.4,
+    "suggestedSize": {
+      "width": 500,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "data",
+      "info"
+    ]
+  },
+  {
+    "name": "growth",
+    "category": "business",
+    "tags": [
+      "growth",
+      "upward",
+      "trend",
+      "profit",
+      "increase",
+      "success"
+    ],
+    "file": "lottie/business/growth.json",
+    "sizeKB": 45.0,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "hook",
+      "data",
+      "cta"
+    ]
+  },
+  {
+    "name": "team",
+    "category": "business",
+    "tags": [
+      "team",
+      "collaboration",
+      "people",
+      "group",
+      "meeting"
+    ],
+    "file": "lottie/business/team.json",
+    "sizeKB": 41.2,
+    "suggestedSize": {
+      "width": 500,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "info",
+      "solution"
+    ]
+  },
+  {
+    "name": "money",
+    "category": "business",
+    "tags": [
+      "money",
+      "finance",
+      "savings",
+      "investment",
+      "dollar"
+    ],
+    "file": "lottie/business/money.json",
+    "sizeKB": 335.2,
+    "suggestedSize": {
+      "width": 350,
+      "height": 350
+    },
+    "suggestedScenes": [
+      "data",
+      "info"
+    ]
+  },
+  {
+    "name": "target",
+    "category": "business",
+    "tags": [
+      "target",
+      "goal",
+      "bullseye",
+      "aim",
+      "objective",
+      "focus"
+    ],
+    "file": "lottie/business/target.json",
+    "sizeKB": 125.2,
+    "suggestedSize": {
+      "width": 350,
+      "height": 350
+    },
+    "suggestedScenes": [
+      "cta",
+      "solution"
+    ]
+  },
+  {
+    "name": "success",
+    "category": "business",
+    "tags": [
+      "success",
+      "celebration",
+      "win",
+      "achievement",
+      "trophy"
+    ],
+    "file": "lottie/business/success.json",
+    "sizeKB": 112.1,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "cta",
+      "hook"
+    ]
+  },
+  {
+    "name": "rocket",
+    "category": "general",
+    "tags": [
+      "rocket",
+      "launch",
+      "startup",
+      "speed",
+      "progress",
+      "boost"
+    ],
+    "file": "lottie/general/rocket.json",
+    "sizeKB": 163.9,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "cta",
+      "hook"
+    ]
+  },
+  {
+    "name": "loading",
+    "category": "general",
+    "tags": [
+      "loading",
+      "spinner",
+      "wait",
+      "progress",
+      "processing"
+    ],
+    "file": "lottie/general/loading.json",
+    "sizeKB": 32.5,
+    "suggestedSize": {
+      "width": 200,
+      "height": 200
+    },
+    "suggestedScenes": [
+      "tech",
+      "info"
+    ]
+  },
+  {
+    "name": "checkmark",
+    "category": "general",
+    "tags": [
+      "check",
+      "success",
+      "done",
+      "complete",
+      "confirm",
+      "yes"
+    ],
+    "file": "lottie/general/checkmark.json",
+    "sizeKB": 24.9,
+    "suggestedSize": {
+      "width": 200,
+      "height": 200
+    },
+    "suggestedScenes": [
+      "cta",
+      "info"
+    ]
+  },
+  {
+    "name": "notification",
+    "category": "general",
+    "tags": [
+      "notification",
+      "alert",
+      "bell",
+      "message",
+      "warning"
+    ],
+    "file": "lottie/general/notification.json",
+    "sizeKB": 98.8,
+    "suggestedSize": {
+      "width": 300,
+      "height": 300
+    },
+    "suggestedScenes": [
+      "problem",
+      "hook"
+    ]
+  },
+  {
+    "name": "search",
+    "category": "general",
+    "tags": [
+      "search",
+      "magnify",
+      "find",
+      "explore",
+      "discover"
+    ],
+    "file": "lottie/general/search.json",
+    "sizeKB": 98.8,
+    "suggestedSize": {
+      "width": 300,
+      "height": 300
+    },
+    "suggestedScenes": [
+      "hook",
+      "info"
+    ]
+  },
+  {
+    "name": "globe",
+    "category": "general",
+    "tags": [
+      "globe",
+      "world",
+      "earth",
+      "global",
+      "international"
+    ],
+    "file": "lottie/general/globe.json",
+    "sizeKB": 15.6,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "hook",
+      "solution"
+    ]
+  },
+  {
+    "name": "lightbulb",
+    "category": "general",
+    "tags": [
+      "lightbulb",
+      "idea",
+      "insight",
+      "innovation",
+      "eureka"
+    ],
+    "file": "lottie/general/lightbulb.json",
+    "sizeKB": 275.2,
+    "suggestedSize": {
+      "width": 350,
+      "height": 350
+    },
+    "suggestedScenes": [
+      "hook",
+      "solution"
+    ]
+  },
+  {
+    "name": "clock",
+    "category": "general",
+    "tags": [
+      "clock",
+      "time",
+      "speed",
+      "deadline",
+      "timer",
+      "fast"
+    ],
+    "file": "lottie/general/clock.json",
+    "sizeKB": 0.6,
+    "suggestedSize": {
+      "width": 300,
+      "height": 300
+    },
+    "suggestedScenes": [
+      "problem",
+      "data"
+    ]
+  },
+  {
+    "name": "star",
+    "category": "general",
+    "tags": [
+      "star",
+      "rating",
+      "favorite",
+      "highlight",
+      "premium"
+    ],
+    "file": "lottie/general/star.json",
+    "sizeKB": 58.3,
+    "suggestedSize": {
+      "width": 200,
+      "height": 200
+    },
+    "suggestedScenes": [
+      "cta",
+      "info"
+    ]
+  },
+  {
+    "name": "particles",
+    "category": "abstract",
+    "tags": [
+      "particles",
+      "dots",
+      "flow",
+      "ambient",
+      "background"
+    ],
+    "file": "lottie/abstract/particles.json",
+    "sizeKB": 143.2,
+    "suggestedSize": {
+      "width": 600,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "any"
+    ]
+  },
+  {
+    "name": "wave",
+    "category": "abstract",
+    "tags": [
+      "wave",
+      "audio",
+      "sound",
+      "frequency",
+      "rhythm"
+    ],
+    "file": "lottie/abstract/wave.json",
+    "sizeKB": 211.9,
+    "suggestedSize": {
+      "width": 600,
+      "height": 200
+    },
+    "suggestedScenes": [
+      "hook",
+      "transition"
+    ]
+  },
+  {
+    "name": "gradient-orb",
+    "category": "abstract",
+    "tags": [
+      "gradient",
+      "orb",
+      "blob",
+      "organic",
+      "background"
+    ],
+    "file": "lottie/abstract/gradient-orb.json",
+    "sizeKB": 599.9,
+    "suggestedSize": {
+      "width": 500,
+      "height": 500
+    },
+    "suggestedScenes": [
+      "any"
+    ]
+  },
+  {
+    "name": "geometric",
+    "category": "abstract",
+    "tags": [
+      "geometric",
+      "shapes",
+      "pattern",
+      "abstract",
+      "modern"
+    ],
+    "file": "lottie/abstract/geometric.json",
+    "sizeKB": 584.4,
+    "suggestedSize": {
+      "width": 400,
+      "height": 400
+    },
+    "suggestedScenes": [
+      "any"
+    ]
+  }
+]

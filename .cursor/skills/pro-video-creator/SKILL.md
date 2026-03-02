@@ -1,6 +1,6 @@
 ---
 name: pro-video-creator
-description: "Professional-quality Remotion video creator with production libraries (remotion-bits, remotion-animated, @remotion/transitions, @remotion/shapes, @remotion/noise, @remotion/motion-blur, @remotion/paths). Produces visually rich Animated Explainer Videos — Kurzgesagt / The School of Life style. Use for any video creation request. Triggers: create video, make video, explainer video, video about, tạo video, làm video."
+description: "Professional-quality Remotion video creator with production libraries (remotion-bits, remotion-animated, @remotion/transitions, @remotion/shapes, @remotion/noise, @remotion/motion-blur, @remotion/paths) and pre-bundled Lottie assets. Produces visually rich Animated Explainer Videos — Kurzgesagt / The School of Life style. Use for any video creation request. Triggers: create video, make video, explainer video, video about, tạo video, làm video."
 ---
 
 # Pro Video Creator
@@ -10,6 +10,8 @@ Tạo **Animated Explainer Video** chất lượng chuyên nghiệp với Remoti
 **ĐỌC THEO THỨ TỰ:**
 1. [references/narrative-pacing.md](references/narrative-pacing.md) — triết lý nhịp kể chuyện
 2. [references/remotion-libraries.md](references/remotion-libraries.md) — **LIBRARY REFERENCE (BẮT BUỘC)** — luôn dùng library thay vì tự viết
+3. [references/scene-blueprints.md](references/scene-blueprints.md) — **SCENE BLUEPRINTS** — concrete TSX examples cho mỗi loại scene
+4. [references/pro-assets-guide.md](references/pro-assets-guide.md) — Lottie assets, icons, shapes
 
 ## Triết lý cốt lõi
 
@@ -29,14 +31,41 @@ Tạo **Animated Explainer Video** chất lượng chuyên nghiệp với Remoti
 > **If a scene could be a PowerPoint slide, it's not good enough.**
 > **If motion doesn't help understanding, remove it.**
 > **LUÔN dùng library component thay vì tự viết interpolate/spring thủ công.**
+> **LUÔN dùng pre-bundled Lottie assets thay vì tự vẽ SVG phức tạp.**
 
 Every scene MUST have:
 1. A **unique layout** different from other scenes in the same video
-2. At least one **ảnh minh họa thật** (Pixabay/Pexels) + image treatment
+2. A **visual focal point** — `LottieAsset` animation, Lucide icon composition, `@remotion/shapes`, or library component
 3. **Purposeful animation** via `remotion-animated` hoặc `remotion-bits`
 4. An **ambient layer** via `Particles` từ remotion-bits (opacity < 0.15)
 5. **Hold frames** — elements stay still 2-3s after appearing for viewer to read
 6. **Scene transitions** via `@remotion/transitions` (fade/slide/wipe)
+7. **Timing derived from AUDIO_SEGMENTS** — no hardcoded frame numbers
+
+## Visual Assets — Thứ tự ưu tiên
+
+| Priority | Asset Type | Component/Source | Khi nào dùng |
+|----------|-----------|-----------------|-------------|
+| 1 | **Pre-bundled Lottie** | `<LottieAsset name="..." />` từ `public/lottie/` | Focal point chính — AI, data, tech, business animations |
+| 2 | **Lucide icons** | `<Brain />`, `<Rocket />`, etc. từ `lucide-react` | Icons nhỏ, labels, badges, category indicators |
+| 3 | **@remotion/shapes** | `<Pie />`, `<Circle />`, `<Star />` | Data visualization, progress, accents |
+| 4 | **Library components** | `Particles`, `MatrixRain`, `CodeBlock`, `GradientTransition` | Ambient layers, specialized effects |
+| 5 | **Simple inline SVG** | Custom `<svg>` | CHỈ cho diagram/flowchart đơn giản |
+| 6 | *(Optional)* Stock images | `<Img src={staticFile("images/...")} />` + treatment | Background textures khi thực sự cần |
+
+### Dùng `LottieAsset` component:
+
+```tsx
+import { LottieAsset } from "@shared/LottieAsset";
+
+// Focal animation — chỉ cần 1 dòng
+<LottieAsset name="ai-brain" style={{ width: 400, height: 400 }} />
+
+// Với custom options
+<LottieAsset name="chart-bar" playbackRate={0.5} loop={true} style={{ width: 500 }} />
+```
+
+Đọc `public/lottie/manifest.json` để xem danh sách assets theo `category` và `tags`.
 
 ## Libraries — LUÔN DÙNG (không tự viết)
 
@@ -61,10 +90,21 @@ Every scene MUST have:
 | Motion blur | `@remotion/motion-blur` | `Trail`, `CameraMotionBlur` |
 | Path draw | `@remotion/paths` | `evolvePath`, `getPointAtLength` |
 | Animated emoji | `@remotion/animated-emoji` | `AnimatedEmoji` |
-| Image treatments | [components/ImageTreatments.md](components/ImageTreatments.md) | DuotoneImage, ColorOverlay, KenBurns, Vignette |
-| Lottie | `@remotion/lottie` | `Lottie` |
+| Lottie animations | `@remotion/lottie` via `LottieAsset` | `<LottieAsset name="..." />` |
 | Light leaks | `@remotion/light-leaks` | `LightLeaks` |
 | Icons | `lucide-react` | `Brain`, `Rocket`, `Zap`, etc. |
+
+## Library Usage per Scene Type
+
+Bảng này xác định PHẢI dùng gì cho mỗi loại scene — model CHỈ CẦN FOLLOW:
+
+| Scene Type | MUST use | SHOULD use | OPTIONAL |
+|-----------|----------|------------|----------|
+| Hook / Intro | `AnimatedText`, `LottieAsset` or `Animated` | `Particles`, `noise2D`, `AnimatedCounter` | `CameraMotionBlur` |
+| Info / Cards | `StaggeredMotion`, `AnimatedText` | `LottieAsset`, `Particles`, Lucide icons | `evolvePath` |
+| Data / Stats | `AnimatedCounter`, `Pie` | `LottieAsset`, `Particles`, `AnimatedText` | `GradientTransition` |
+| Code / Tech | `CodeBlock` or `TypeWriter`, `Animated` | `MatrixRain`, `Particles` | `Trail`, `LottieAsset` |
+| CTA | `AnimatedText`, `Particles` (burst mode) | `LottieAsset`, `GradientTransition` | `LightLeaks` |
 
 ## Motion Style: Simple > Complex
 
@@ -89,28 +129,74 @@ Giống Kurzgesagt, chỉ dùng **5 loại motion cơ bản** — implement bằ
 </Animated>
 ```
 
+## Minimum Viable Scene
+
+Mỗi scene TỐI THIỂU phải có (bất kể model nào cũng PHẢI đạt):
+
+1. **Background**: `GradientTransition` hoặc gradient (khác scene trước/sau)
+2. **Title**: `AnimatedText` với split word animation
+3. **Focal visual**: `LottieAsset` HOẶC Lucide icon + `Animated` HOẶC `@remotion/shapes`
+4. **Ambient**: `Particles` (opacity < 0.15)
+5. **Timing**: Derived từ `AUDIO_SEGMENTS` — KHÔNG hardcode delay numbers
+
+```tsx
+// MINIMUM VIABLE SCENE — mọi scene ít nhất phải đạt mức này
+export const MinimumScene: React.FC = () => {
+  const { fps } = useVideoConfig();
+  const segments = AUDIO_SEGMENTS[sceneKey];
+  const startFrame = segments[0].startFrame;
+
+  return (
+    <AbsoluteFill>
+      {/* 1. Background */}
+      <GradientTransition gradient={[gradient1, gradient2]} duration={sceneDuration} style={{ position: "absolute", inset: 0 }} />
+
+      {/* 2. Ambient */}
+      <Particles style={{ position: "absolute", inset: 0, opacity: 0.12 }}>
+        <Spawner rate={0.05} max={25} lifespan={90} velocity={{ x: 2, y: -4 }} area={{ width: 1920, height: 1080 }}>
+          <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: COLORS.accentLight }} />
+        </Spawner>
+        <Behavior opacity={[0.12, 0]} />
+      </Particles>
+
+      {/* 3. Focal visual — derive timing from AUDIO_SEGMENTS */}
+      <Animated animations={[Fade({ to: 1, initial: 0 }), Scale({ by: 1, initial: 0.7 })]} delay={startFrame + 10}>
+        <LottieAsset name="ai-brain" style={{ width: 350, height: 350 }} />
+      </Animated>
+
+      {/* 4. Title text */}
+      <AnimatedText
+        transition={{ split: "word", opacity: [0, 1], y: [30, 0], splitStagger: 4, duration: 25, delay: startFrame }}
+        style={{ fontFamily: FONT_FAMILY, fontSize: 48, fontWeight: 700, color: COLORS.white }}
+      >
+        Scene title here
+      </AnimatedText>
+    </AbsoluteFill>
+  );
+};
+```
+
 ## Anti-Patterns (FORBIDDEN)
 
-- ❌ **Tự viết `interpolate()` chains** khi `remotion-animated` hoặc `remotion-bits` có sẵn
-- ❌ **Tự viết particle system** — dùng `Particles` từ `remotion-bits`
-- ❌ **Tự viết typing effect** — dùng `AnimatedText`/`TypeWriter` từ `remotion-bits`
-- ❌ **Tự viết counter** — dùng `AnimatedCounter` từ `remotion-bits`
-- ❌ **Manual fade in/out giữa scenes** — dùng `TransitionSeries` + `fade()`
-- ❌ **`Math.sin` cho floating** — dùng `noise2D` từ `@remotion/noise`
-- ❌ **Tự vẽ SVG phức tạp** (người, vật thể, cảnh) — dùng ảnh Pixabay/Pexels
-- ❌ Visual xuất hiện trước/không liên quan narration
-- ❌ Animation liên tục không dừng — phải có hold frames
-- ❌ Ambient layer nổi bật hơn content (particles opacity > 0.15)
-- ❌ Same layout reused across scenes
-- ❌ Emoji as visual element — dùng `lucide-react` icons hoặc `AnimatedEmoji`
-- ❌ `useState` or CSS transitions for animation
-- ❌ Hardcoded frame numbers — derive from `AUDIO_SEGMENTS`
-- ❌ Bỏ qua bước fetch-illustrations
+- **Tự viết `interpolate()` chains** khi `remotion-animated` hoặc `remotion-bits` có sẵn
+- **Tự viết particle system** — dùng `Particles` từ `remotion-bits`
+- **Tự viết typing effect** — dùng `AnimatedText`/`TypeWriter` từ `remotion-bits`
+- **Tự viết counter** — dùng `AnimatedCounter` từ `remotion-bits`
+- **Tự vẽ SVG phức tạp** (người, vật thể, cảnh) — dùng `LottieAsset` từ kho có sẵn
+- **Manual fade in/out giữa scenes** — dùng `TransitionSeries` + `fade()`
+- **`Math.sin` cho floating** — dùng `noise2D` từ `@remotion/noise`
+- **Hardcoded frame delays** (`delay={40}`, `delay={55}`) — derive từ `AUDIO_SEGMENTS`
+- Visual xuất hiện trước/không liên quan narration
+- Animation liên tục không dừng — phải có hold frames
+- Ambient layer nổi bật hơn content (particles opacity > 0.15)
+- Same layout reused across scenes
+- Emoji as visual element — dùng `lucide-react` icons hoặc `AnimatedEmoji`
+- `useState` or CSS transitions for animation
 
 ## Project Structure
 
 ```
-src/[VideoName]/
+src/projects/[VideoName]/
 ├── [VideoName].tsx          # Main composition (dùng TransitionSeries)
 ├── constants.ts             # COLORS, FONT_FAMILY, AUDIO_SEGMENTS
 ├── timeline.generated.ts    # Auto-generated by rebuild-timeline
@@ -118,9 +204,21 @@ src/[VideoName]/
 │   ├── AudioLayer.tsx       # Narration + BGM playback
 │   └── SubtitleSequence.tsx # Subtitle overlay
 └── scenes/
-    ├── Scene01_Hook.tsx     # Mỗi scene dùng library components
+    ├── Scene01_Hook.tsx     # Mỗi scene dùng library components + LottieAsset
     ├── Scene02_Problem.tsx
     └── ...
+
+src/shared/
+└── LottieAsset.tsx          # Shared Lottie wrapper — dùng cho mọi video
+
+public/lottie/
+├── manifest.json            # Asset catalog
+├── ai/                      # AI/ML animations
+├── tech/                    # Tech/coding animations
+├── data/                    # Charts/analytics animations
+├── business/                # Business animations
+├── general/                 # General purpose animations
+└── abstract/                # Abstract/ambient animations
 ```
 
 ## Design System
@@ -221,164 +319,21 @@ Read templates in `templates/` for layout patterns:
 | Floating Cards | [templates/floating-cards.md](templates/floating-cards.md) | Features/benefits |
 | Code Terminal | [templates/code-terminal.md](templates/code-terminal.md) | Tech demos |
 
-## Scene Implementation Pattern
-
-Mỗi scene nên follow pattern này, sử dụng library components:
-
-```tsx
-import { AbsoluteFill, Img, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
-import { Animated, Move, Scale, Fade } from "remotion-animated";
-import { AnimatedText, Particles, Spawner, Behavior } from "remotion-bits";
-import { noise2D } from "@remotion/noise";
-import { COLORS, FONT_FAMILY, AUDIO_SEGMENTS } from "../constants";
-
-export const Scene01_Hook: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-
-  return (
-    <AbsoluteFill style={{
-      background: `linear-gradient(135deg, ${COLORS.bgDark}, ${COLORS.bgMid})`,
-    }}>
-      {/* 1. Background: ảnh minh họa + treatment */}
-      <Img src={staticFile("images/my-video/scene-01.jpg")} style={{
-        position: "absolute", inset: 0, width: "100%", height: "100%",
-        objectFit: "cover", filter: "grayscale(80%) contrast(1.1)", opacity: 0.15,
-      }} />
-
-      {/* 2. Ambient: Particles (library) */}
-      <Particles
-        spawner={Spawner.continuous({ rate: 2, maxParticles: 25 })}
-        behaviors={[Behavior.linearVelocity({ vy: -0.3 }), Behavior.fadeOut()]}
-        style={{ position: "absolute", inset: 0, opacity: 0.12 }}
-      />
-
-      {/* 3. Content: dùng Animated + AnimatedText */}
-      <div style={{ position: "relative", zIndex: 1, padding: 80 }}>
-        <Animated animations={[
-          Fade({ to: 1, initial: 0 }),
-          Move({ y: 0, initialY: 40 }),
-        ]} delay={10}>
-          <Img src={staticFile("images/my-video/scene-01-main.jpg")} style={{
-            width: 500, borderRadius: 20,
-            boxShadow: "0 12px 40px rgba(0,0,0,0.4)",
-          }} />
-        </Animated>
-
-        <AnimatedText
-          transition={{
-            split: "word", opacity: [0, 1], y: [30, 0],
-            blur: [6, 0], stagger: 3, duration: 25,
-          }}
-          style={{ fontSize: 48, fontWeight: 700, color: COLORS.white, marginTop: 40 }}
-        >
-          Tiêu đề scene
-        </AnimatedText>
-      </div>
-    </AbsoluteFill>
-  );
-};
-```
-
-## Visual Assets (Thứ tự ưu tiên)
-
-Đọc [references/pro-assets-guide.md](references/pro-assets-guide.md) cho hướng dẫn chi tiết.
-
-**TẢI TRƯỚC, VẼ SAU:**
-
-1. **Ảnh Pixabay/Pexels** + image treatment — BẮT BUỘC chạy `fetch-illustrations.py`
-2. **Lottie animation** (`@remotion/lottie`)
-3. **Lucide icons** (cho icons nhỏ, labels)
-4. **Library components** (`Particles`, `GradientTransition`, `MatrixRain`)
-5. **`@remotion/shapes`** (`Circle`, `Star`, `Pie`) cho simple shapes
-6. **Custom SVG** — CHỈ cho diagram/flowchart đơn giản
-
 ## Background Standards
 
 Mỗi scene cần background **unique**. Dùng library:
 
 | Background | Implementation |
 |---|---|
-| Gradient animated | `<GradientTransition gradients={[...]} />` |
+| Gradient animated | `<GradientTransition gradient={[...]} />` |
 | Particle ambient | `<Particles spawner={Spawner.continuous(...)} />` |
 | Noise-based | `noise2D` + dynamic gradient |
-| Photo background | `<ColorOverlayImage src="..." blur={5} overlayOpacity={0.7} />` |
 | Matrix rain | `<MatrixRain color={COLORS.accent} style={{ opacity: 0.08 }} />` |
 | Light leaks | `<LightLeaks seed={42} style={{ opacity: 0.2 }} />` |
 
-## Animation Standards
-
-### Declarative approach (ƯU TIÊN)
-
-```tsx
-// ✅ Dùng remotion-animated
-<Animated animations={[Fade({ to: 1, initial: 0 }), Move({ y: 0, initialY: 40 })]} delay={15}>
-  <Content />
-</Animated>
-
-// ✅ Dùng remotion-bits cho text
-<AnimatedText transition={{ split: "word", opacity: [0, 1], y: [30, 0], stagger: 3, duration: 25 }}>
-  Title text
-</AnimatedText>
-
-// ✅ Dùng StaggeredMotion cho lists
-<StaggeredMotion stagger={5} transition={{ opacity: [0, 1], y: [30, 0], duration: 25 }}>
-  <Item1 /><Item2 /><Item3 />
-</StaggeredMotion>
-```
-
-### Spring chỉ khi cần manual control
-
-```ts
-const entrance = spring({ frame: frame - startFrame, fps, config: { damping: 200 } });
-```
-
-### Organic motion (thay Math.sin)
-
-```ts
-const floatX = noise2D("float-x", frame * 0.01, 0) * 15;
-const floatY = noise2D("float-y", 0, frame * 0.01) * 10;
-```
-
-### Path draw animation
-
-```tsx
-import { evolvePath } from "@remotion/paths";
-
-const pathStr = "M 100 200 C 200 100 400 300 500 200";
-const progress = spring({ frame, fps, config: { damping: 200 } });
-const evolved = evolvePath(progress, pathStr);
-
-<svg><path d={pathStr} stroke={COLORS.accent} strokeWidth={3} fill="none"
-  strokeDasharray={evolved.strokeDasharray}
-  strokeDashoffset={evolved.strokeDashoffset}
-/></svg>
-```
-
-### Motion blur cho dramatic moments
-
-```tsx
-import { CameraMotionBlur } from "@remotion/motion-blur";
-
-<CameraMotionBlur shutterAngle={180} samples={8}>
-  <SceneContent />
-</CameraMotionBlur>
-```
-
-## Workflow
-
-1. Đọc [references/remotion-libraries.md](references/remotion-libraries.md) — nắm library API
-2. Đọc `templates/` và `components/` — nắm layout patterns
-3. **BẮT BUỘC: Chạy `python scripts/fetch-illustrations.py`** để tải hình minh họa
-4. For each scene, pick **different template** + ảnh đã tải + image treatment
-5. Implement bằng library components (`Animated`, `AnimatedText`, `Particles`, etc.)
-6. Dùng `TransitionSeries` cho main composition
-7. Wire up `AUDIO_SEGMENTS` cho subtitle sync
-8. Test in `npx remotion studio`
-
 ## Thumbnail Design
 
-Create `src/[VideoName]/Thumbnail.tsx` as a `<Still>` (1280×720):
+Create `src/projects/[VideoName]/Thumbnail.tsx` as a `<Still>` (1280×720):
 
 ```tsx
 export const Thumbnail: React.FC = () => (
@@ -387,7 +342,7 @@ export const Thumbnail: React.FC = () => (
     display: "flex", alignItems: "center", justifyContent: "center",
     padding: 80,
   }}>
-    {/* Large visual — ảnh/Lottie/icon, ≥40% of area */}
+    {/* Large visual — LottieAsset or icon, ≥40% of area */}
     {/* Big bold title — ≥60px, max 6-8 words */}
   </AbsoluteFill>
 );
@@ -395,11 +350,11 @@ export const Thumbnail: React.FC = () => (
 
 ## Quality Checklist
 
-- [ ] `fetch-illustrations.py` đã chạy, ảnh tải về `public/images/[tên-video]/`
-- [ ] **Library components** được dùng (AnimatedText, Particles, TransitionSeries...)
+- [ ] **Library components** được dùng (AnimatedText, Particles, TransitionSeries, StaggeredMotion...)
+- [ ] **LottieAsset** hoặc icon composition cho focal point mỗi scene
 - [ ] **Không có manual interpolate/spring** khi library có sẵn
+- [ ] **Không có hardcoded frame delays** — all timing from AUDIO_SEGMENTS
 - [ ] Every scene has unique layout
-- [ ] Every scene has ảnh minh họa thật + image treatment
 - [ ] `TransitionSeries` dùng cho chuyển cảnh (fade/slide/wipe)
 - [ ] Ambient layer via `Particles` từ remotion-bits
 - [ ] `noise2D` cho organic motion (thay Math.sin)
@@ -407,4 +362,5 @@ export const Thumbnail: React.FC = () => (
 - [ ] Subtitles sync with narration audio
 - [ ] Content fills 60%+ of canvas
 - [ ] No two adjacent scenes use same template
+- [ ] Accent colors rotate between scenes
 - [ ] Thumbnail generated

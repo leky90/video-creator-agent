@@ -214,17 +214,109 @@ Dùng cho: problem↔solution transitions, before↔after
 
 ---
 
-## 8. Implementation in Remotion
+## 8. Derive Timing from AUDIO_SEGMENTS (QUAN TRỌNG)
 
-### Deriving timing from AUDIO_SEGMENTS
+**TẤT CẢ animation delays PHẢI derive từ `AUDIO_SEGMENTS`, KHÔNG hardcode số frame.**
+
+### Tại sao?
+
+Khi TTS tạo audio, mỗi scene có duration khác nhau. Nếu hardcode `delay={40}`, animation có thể xuất hiện trước/sau narration. Dùng `AUDIO_SEGMENTS` đảm bảo sync.
+
+### Pattern 1: Scene start → derive all delays
 
 ```tsx
-// ĐÚNG: Animation bắt đầu khi narration bắt đầu
+export const MyScene: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+
+  // ĐÚNG: Lấy timing từ audio segments
+  const segments = AUDIO_SEGMENTS[sceneKey]; // sceneKey = "hook", "text", "data"...
+  const startFrame = segments[0].startFrame;
+
+  // Title xuất hiện khi narration bắt đầu
+  const titleDelay = startFrame;
+
+  // Lottie/focal visual xuất hiện 10 frames sau title
+  const focalDelay = startFrame + 10;
+
+  // Content items xuất hiện 40 frames sau (khi narration đề cập)
+  const contentDelay = startFrame + 40;
+
+  // Counter bắt đầu 60 frames sau
+  const counterDelay = startFrame + 60;
+
+  return (
+    <AbsoluteFill>
+      <AnimatedText ... delay={titleDelay} />
+      <LottieAsset ... />  {/* wrapped in Animated with delay={focalDelay} */}
+      <StaggeredMotion ... />  {/* items with delay={contentDelay} */}
+      <AnimatedCounter ... delay={counterDelay} />
+    </AbsoluteFill>
+  );
+};
+```
+
+### Pattern 2: Stagger items synced to narration
+
+```tsx
+// Narration: "Ba yếu tố: tốc độ, chính xác, và chi phí thấp"
+// Mỗi item cách nhau ~0.8s (24 frames at 30fps)
+const baseDelay = AUDIO_SEGMENTS.info[0].startFrame + 20;
+const ITEMS = [
+  { label: "Tốc độ", delay: baseDelay },
+  { label: "Chính xác", delay: baseDelay + 24 },
+  { label: "Chi phí thấp", delay: baseDelay + 48 },
+];
+
+// Hoặc dùng StaggeredMotion (tự stagger)
+<StaggeredMotion
+  stagger={8}  // 8 frames giữa mỗi item (~0.27s)
+  transition={{ opacity: [0, 1], y: [30, 0], duration: 25 }}
+>
+  {ITEMS.map(item => <Card key={item.label} {...item} />)}
+</StaggeredMotion>
+```
+
+### Pattern 3: Counter synced to narration emphasis
+
+```tsx
+// Narration: "...tiết kiệm hơn 10 giờ mỗi tuần"
+// Counter starts slightly before narration reaches the number
+const counterStart = AUDIO_SEGMENTS.data[0].startFrame + 50;
+
+<AnimatedCounter
+  transition={{
+    values: [0, 10],
+    duration: 90,      // count over 3 seconds
+    delay: counterStart,
+    easing: "easeOut",
+  }}
+/>
+```
+
+### Pattern 4: Spring entrance synced to narration
+
+```tsx
+// ĐÚNG: derive từ AUDIO_SEGMENTS
 const revealStart = AUDIO_SEGMENTS.solution[0].startFrame;
 const iconAppear = spring({ frame: frame - revealStart, fps, config: { damping: 200 } });
 
-// SAI: Hardcode frame number không liên quan narration
-const iconAppear = spring({ frame: frame - 30, fps });
+// SAI: Hardcode frame number
+const iconAppear = spring({ frame: frame - 30, fps });  // KHÔNG LÀM THẾ NÀY
+```
+
+### Anti-patterns (KHÔNG ĐƯỢC)
+
+```tsx
+// ❌ Hardcoded delays — sẽ lệch khi TTS duration thay đổi
+delay={40}
+delay={55}
+delay={120}
+
+// ✅ Derived từ AUDIO_SEGMENTS
+delay={segments[0].startFrame}
+delay={segments[0].startFrame + 15}
+delay={segments[0].startFrame + 40}
 ```
 
 ### Hold frame pattern
@@ -237,23 +329,13 @@ const appear = spring({ frame: frame - startFrame, fps, config: { damping: 200 }
 </div>
 ```
 
-### Narration-synced stagger
-
-```tsx
-// Stagger delay dựa trên narration timing, không phải aesthetic
-const ITEMS_TIMING = [
-  { label: "Tốc độ", startFrame: AUDIO_SEGMENTS.how_it_works[0].startFrame },
-  { label: "Chính xác", startFrame: AUDIO_SEGMENTS.how_it_works[0].startFrame + 25 },
-  { label: "Chi phí thấp", startFrame: AUDIO_SEGMENTS.how_it_works[0].startFrame + 50 },
-];
-```
-
 ---
 
 ## Checklist trước khi code mỗi scene
 
 - [ ] Scene chỉ truyền tải 1 ý chính?
 - [ ] Visual elements xuất hiện đúng lúc narration đề cập?
+- [ ] **ALL timing derived từ AUDIO_SEGMENTS?** (KHÔNG hardcode delay numbers)
 - [ ] Có khoảng hold (2-3s) sau khi element xuất hiện?
 - [ ] Ambient layer đủ nhẹ (opacity < 0.15)?
 - [ ] Animation entrance đủ chậm (20-30 frames)?
