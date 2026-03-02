@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Remotion output
+out/
+
+# Generated files (re-generate per video)
+src/*/timeline.generated.ts
+scripts/rebuild-timeline-*.js
+!scripts/rebuild-timeline.js
+
+# TTS audio (re-generate from segments.json)
+public/audio/
+
+# Fetched images (re-download per video)
+public/images/
+
+# Lottie downloads
+public/lottie/
+
+# Video project data (research, segments — per video)
+remotion_video/
+
+# Environment
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# Archives
+*.zip
+*.tar.gz
+
+# Unused skills (kept locally, not in repo)
+.cursor/skills/educational-video-creator/
+.cursor/skills/content-repurposing/
+.cursor/skills/remotion-asset-coordinator/
+.cursor/skills/remotion-video-toolkit/
+.cursor/skills/unsplash/
+
+# Deprecated assets dir
+public/assets/
